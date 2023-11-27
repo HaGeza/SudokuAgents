@@ -3,7 +3,6 @@
 #  https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import random
-import time
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
 
@@ -14,22 +13,22 @@ class GameTree:
     """
 
     """
-    +---------------+--------------+------------+
-    |             Row not completed            ||
-    +---------------+--------------+-----------+|
-    |               | Region n. c. | Region c. ||
-    |+--------------+--------------+-----------+|
-    || Column n. c. |      0       |     1     ||
-    || Column c.    |      1       |     3     ||
-    |+--------------+--------------+-----------+|
-    |             Row completed                 |
-    +---------------+--------------+-----------+|
-    |               | Region n. c. | Region c. ||
-    |+--------------+--------------+-----------+|
-    || Column n. c. |      1       |     3     ||
-    || Column c.    |      3       |     7     ||
-    |+--------------+--------------+-----------+|
-    +---------------+--------------+------------+
+    O---------------+--------------+------------+-O
+    |              Row not completed            | |
+    +----------------+--------------+-----------+-|
+    |                | Block n. c.  | Block c.  | |
+    +-+--------------+--------------+-----------+-+
+    | | Column n. c. |      0       |     1     |-|
+    | | Column c.    |      1       |     3     |-|
+    +-+--------------+--------------+-----------+-+
+    |                 Row completed               |
+    +----------------+--------------+-----------+-+
+    |                | Block n. c.  | Block c.  | |
+    +-+--------------+--------------+-----------+-+
+    | | Column n. c. |      1       |     3     | |
+    | | Column c.    |      3       |     7     | |
+    +-+--------------+--------------+-----------+-+
+    O----------------+--------------+-----------+-O
     """
     REWARDS = [
         [
@@ -43,18 +42,19 @@ class GameTree:
 
     def __init__(self, game_state: GameState):
         """
-        Initialize the game tree with the given game state.
+        Initialize the game tree with the given game state. Also stores the
+        heuristic scores of the players, which can be used to evaluate a game state.
 
         @param game_state: the GameState object
         """
 
         self.gs = game_state
-        self.best_move = 0
+        self.h_scores = [0, 0]
 
 
-    def _get_region(self, i: int, j: int) -> (int, int):
+    def _get_block(self, i: int, j: int) -> (int, int):
         """
-        Get the elements in the region where the cell (i,j) is located.
+        Get the elements in the block where the cell (i,j) is located.
 
         @param i: row index
         @param j: column index 
@@ -63,10 +63,10 @@ class GameTree:
         m = self.gs.board.m
         n = self.gs.board.n
 
-        region_i = i // m
-        region_j = j // n
-        return [self.gs.board.get(ii, jj) for jj in range(region_j * n, (region_j + 1) * n)
-                                  for ii in range(region_i * m, (region_i + 1) * m)]
+        block_i = i // m
+        block_j = j // n
+        return [self.gs.board.get(ii, jj) for jj in range(block_j * n, (block_j + 1) * n)
+                                  for ii in range(block_i * m, (block_i + 1) * m)]
 
 
     def _update_score(self, reward: float, maximizer: bool) -> None:    
@@ -74,36 +74,54 @@ class GameTree:
         Add reward to the score of the relevant player.
 
         @param reward: reward to be added
-        @param maximizer: True if maximizing player, False if minimizing player
+        @param maximizer: 1True` if maximizing player, `False` if minimizing player
         """
 
         current_player = self.gs.current_player() - 1
         score_ind = current_player if maximizer else 1 - current_player
-        self.gs.scores[score_ind] += reward
+        self.h_scores[score_ind] += reward
 
 
     def _apply_move(self, move: Move, maximizer: bool) -> float:
         """
-        Put move.value into cell (move.i, move.j). Check if the row, column and region are filled in.
+        Put `move.value` into cell `(move.i, move.j)`. Check if the row, column and block are filled in,
+        or if the opposing player will be able to fill them in on the next move.
         Update the score of the relevant player as needed.
 
         @param move: the move
-        @param maximizer: True if maximizing player, False if minimizing player
+        @param maximizer: `True` if maximizing player, `False` if minimizing player
+        @return: reward
         """
 
-        self.gs.board.put(move.i, move.j, move.value)
+        board = self.gs.board
+        N = board.N
 
-        row_full = all(self.gs.board.get(move.i, j) != SudokuBoard.empty for j in range(self.gs.board.N))
-        col_full = all(self.gs.board.get(i, move.j) != SudokuBoard.empty for i in range(self.gs.board.N))
-        reg_full = all(value != SudokuBoard.empty for value in self._get_region(move.i, move.j))
+        board.put(move.i, move.j, move.value)
 
-        reward = self.REWARDS[row_full][col_full][reg_full]
+        # Count the number of empty cells in the row, column and block
+        row_cnt = sum(board.get(move.i, j) == SudokuBoard.empty for j in range(N))
+        col_cnt = sum(board.get(i, move.j) == SudokuBoard.empty for i in range(N))
+        reg_cnt = sum(value == SudokuBoard.empty for value in self._get_block(move.i, move.j))
+
+        # Filling in a region gives reward, but leaving it with just 1 unfilled cell gives penalty,
+        # since the other player will (most likely) fill it in on the next move.
+        reward = self.REWARDS[row_cnt == 0][col_cnt == 0][reg_cnt == 0] - \
+                 self.REWARDS[row_cnt == 1][col_cnt == 1][reg_cnt == 1]
         self._update_score(reward, maximizer)        
 
         return reward
 
     
     def _undo_move(self, move: Move, reward: int, maximizer: bool) -> None:
+        """
+        Undo `move`, i.e. put `SudokuBoard.empty` into cell `(move.i, move.j)`.
+        Subtract `reward` from the score of the relevant player.
+
+        @param move: the move
+        @param reward: reward that was added
+        @param maximizer: `True` if maximizing player, `False` if minimizing player
+        """
+
         self.gs.board.put(move.i, move.j, SudokuBoard.empty)
         self._update_score(-reward, maximizer)
 
@@ -117,13 +135,13 @@ class GameTree:
         @param value: value to be placed 
         """
 
-        region = self._get_region(i, j)
+        block = self._get_block(i, j)
         board = self.gs.board
         N = self.gs.board.N
 
         return value not in [board.get(i, jj) for jj in range(N)] \
             and value not in [board.get(ii, j) for ii in range(N)] \
-            and value not in region
+            and value not in block
     
     
     def _evaluate(self) -> float:
@@ -134,7 +152,7 @@ class GameTree:
         """
 
         current_player = self.gs.current_player() - 1
-        return self.gs.scores[current_player] - self.gs.scores[1 - current_player]
+        return self.h_scores[current_player] - self.h_scores[1 - current_player]
 
 
     def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move):
