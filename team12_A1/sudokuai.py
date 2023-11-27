@@ -108,56 +108,6 @@ class GameTree:
         self._update_score(-reward, maximizer)
 
 
-    def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move):
-        """
-        Minimax algorithm with alpha-beta pruning. 
-
-        @param depth: remaining depth of minimax algorithm
-        @param maximizer: True if maximizing player, False if minimizing player
-        @param alpha: alpha value
-        @param beta: beta value
-        @return: (score, move) tuple
-        """
-        if depth == 0:
-            return (self._evaluate(), None)
-
-        all_moves = self._get_possible_moves()
-        if len(all_moves) == 0:
-            return (self._evaluate(), None)
-
-        best_score = float('-inf') if maximizer else float('inf')
-        best_move = None
-
-        if maximizer:
-            for move in all_moves:
-                reward = self._apply_move(move, True)
-                score, _ = self.minimax(depth - 1, False, alpha, beta)
-                self._undo_move(move, reward, True)
-
-                if score > best_score:
-                    best_score = score
-                    best_move = move
-
-                alpha = max(alpha, best_score)
-                if alpha >= beta:
-                    break
-        else:
-            for move in self._get_possible_moves():
-                reward = self._apply_move(move, False)
-                score, _ = self.minimax(depth - 1, True, alpha, beta)
-                self._undo_move(move, reward, False)
-
-                if score < best_score:
-                    best_score = score
-                    best_move = move
-
-                beta = min(beta, best_score)
-                if alpha >= beta:
-                    break
-
-        return best_score, best_move
-
-
     def _move_is_legal(self, i: int, j: int, value: int) -> bool:
         """
         Check if a move is legal.
@@ -185,9 +135,59 @@ class GameTree:
 
         current_player = self.gs.current_player() - 1
         return self.gs.scores[current_player] - self.gs.scores[1 - current_player]
-    
 
-    def _get_possible_moves(self) -> [Move]:
+
+    def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move):
+        """
+        Minimax algorithm with alpha-beta pruning. 
+
+        @param depth: remaining depth of minimax algorithm
+        @param maximizer: True if maximizing player, False if minimizing player
+        @param alpha: alpha value
+        @param beta: beta value
+        @return: (score, move) tuple
+        """
+        if depth == 0:
+            return (self._evaluate(), None)
+
+        all_moves = self.get_possible_moves()
+        if len(all_moves) == 0:
+            return (self._evaluate(), None)
+
+        best_score = float('-inf') if maximizer else float('inf')
+        best_move = None
+
+        if maximizer:
+            for move in all_moves:
+                reward = self._apply_move(move, True)
+                score, _ = self.minimax(depth - 1, False, alpha, beta)
+                self._undo_move(move, reward, True)
+
+                if score > best_score:
+                    best_score = score
+                    best_move = move
+
+                alpha = max(alpha, best_score)
+                if alpha >= beta:
+                    break
+        else:
+            for move in self.get_possible_moves():
+                reward = self._apply_move(move, False)
+                score, _ = self.minimax(depth - 1, True, alpha, beta)
+                self._undo_move(move, reward, False)
+
+                if score < best_score:
+                    best_score = score
+                    best_move = move
+
+                beta = min(beta, best_score)
+                if alpha >= beta:
+                    break
+
+        return best_score, best_move
+
+
+    def get_possible_moves(self) -> [Move]:
         """
         Get all possible moves for the current game state. 
         """
@@ -216,10 +216,15 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
     # N.B. This is a very naive implementation.
     def compute_best_move(self, game_state: GameState) -> None:
-        depth = 1
+        depth = 0
         while True:
-            _, move = GameTree(game_state).minimax(depth, True, float('-inf'), float('inf'))
-            self.propose_move(move)
+            tree = GameTree(game_state)
+            _, move = tree.minimax(depth, True, float('-inf'), float('inf'))
+
+            if move is None:
+                self.propose_move(random.choice(tree.get_possible_moves()))
+            else:
+                self.propose_move(move)
             depth += 1
             
 
