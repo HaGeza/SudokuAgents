@@ -13,6 +13,24 @@ class GameTree:
     Game tree for Competitive Sudoku. 
     """
 
+    """
+    +---------------+--------------+------------+
+    |             Row not completed            ||
+    +---------------+--------------+-----------+|
+    |               | Region n. c. | Region c. ||
+    |+--------------+--------------+-----------+|
+    || Column n. c. |      0       |     1     ||
+    || Column c.    |      1       |     3     ||
+    |+--------------+--------------+-----------+|
+    |             Row completed                 |
+    +---------------+--------------+-----------+|
+    |               | Region n. c. | Region c. ||
+    |+--------------+--------------+-----------+|
+    || Column n. c. |      1       |     3     ||
+    || Column c.    |      3       |     7     ||
+    |+--------------+--------------+-----------+|
+    +---------------+--------------+------------+
+    """
     REWARDS = [
         [
             [0, 1],
@@ -26,13 +44,22 @@ class GameTree:
     def __init__(self, game_state: GameState):
         """
         Initialize the game tree with the given game state.
+
         @param game_state: the GameState object
         """
+
         self.gs = game_state
         self.best_move = 0
 
 
     def _get_region(self, i: int, j: int) -> (int, int):
+        """
+        Get the elements in the region where the cell (i,j) is located.
+
+        @param i: row index
+        @param j: column index 
+        """
+
         m = self.gs.board.m
         n = self.gs.board.n
 
@@ -43,12 +70,27 @@ class GameTree:
 
 
     def _update_score(self, reward: float, maximizer: bool) -> None:    
+        """
+        Add reward to the score of the relevant player.
+
+        @param reward: reward to be added
+        @param maximizer: True if maximizing player, False if minimizing player
+        """
+
         current_player = self.gs.current_player() - 1
         score_ind = current_player if maximizer else 1 - current_player
         self.gs.scores[score_ind] += reward
 
 
     def _apply_move(self, move: Move, maximizer: bool) -> float:
+        """
+        Put move.value into cell (move.i, move.j). Check if the row, column and region are filled in.
+        Update the score of the relevant player as needed.
+
+        @param move: the move
+        @param maximizer: True if maximizing player, False if minimizing player
+        """
+
         self.gs.board.put(move.i, move.j, move.value)
 
         row_full = all(self.gs.board.get(move.i, j) != SudokuBoard.empty for j in range(self.gs.board.N))
@@ -69,6 +111,7 @@ class GameTree:
     def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move):
         """
         Minimax algorithm with alpha-beta pruning. 
+
         @param depth: remaining depth of minimax algorithm
         @param maximizer: True if maximizing player, False if minimizing player
         @param alpha: alpha value
@@ -118,6 +161,7 @@ class GameTree:
     def _move_is_legal(self, i: int, j: int, value: int) -> bool:
         """
         Check if a move is legal.
+
         @param i: row index
         @param j: column index
         @param value: value to be placed 
@@ -139,9 +183,7 @@ class GameTree:
         Current implementation: difference between current player's score and opponent's score.
         """
 
-        # [1 or 2]
         current_player = self.gs.current_player() - 1
-        # print(f'LOG: {current_player}')
         return self.gs.scores[current_player] - self.gs.scores[1 - current_player]
     
 
@@ -180,15 +222,4 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             self.propose_move(move)
             depth += 1
             
-
-    # Generate list of legal moves [x]
-
-    # Evaluation function for any game state [x]
-
-    # Minimax algorithm
-
-    # Alpha-beta pruning
-
-    # Iterative deepening
-
 
