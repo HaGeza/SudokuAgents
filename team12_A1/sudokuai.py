@@ -40,6 +40,20 @@ class GameTree:
         ]
     ]
 
+    """
+    Similar to REWARDS, but indices represent whether or not
+    the given region has exactly 1 empty cell. 
+    """
+    PENALTY = [
+        [
+            [0, 1],
+            [1, 1],
+        ],[
+            [1, 3],
+            [3, 3],
+        ]
+    ]
+
     def __init__(self, game_state: GameState):
         """
         Initialize the game tree with the given game state. Also stores the
@@ -106,7 +120,7 @@ class GameTree:
         # Filling in a region gives reward, but leaving it with just 1 unfilled cell gives penalty,
         # since the other player will (most likely) fill it in on the next move.
         reward = self.REWARDS[row_cnt == 0][col_cnt == 0][reg_cnt == 0] - \
-                 self.REWARDS[row_cnt == 1][col_cnt == 1][reg_cnt == 1]
+                 self.PENALTY[row_cnt == 1][col_cnt == 1][reg_cnt == 1]
         self._update_score(reward, maximizer)        
 
         return reward
