@@ -76,19 +76,11 @@ class GameTree:
         @return: (score, move) tuple
         """
         if depth == 0:
-            print("MAX DEPTH REACHED")
-            print(self.gs.board)
-            score = self._evaluate()
-            print(score)
-            return (score, None)
+            return (self._evaluate(), None)
 
         all_moves = self._get_possible_moves()
         if len(all_moves) == 0:
-            print("NO MORE MOVES")
-            print(self.gs.board)
-            score = self._evaluate()
-            print(score)
-            return (score, None)
+            return (self._evaluate(), None)
 
         best_score = float('-inf') if maximizer else float('inf')
         best_move = None
@@ -182,11 +174,11 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
     # N.B. This is a very naive implementation.
     def compute_best_move(self, game_state: GameState) -> None:
-        print("COMPUTE MOVE CALLED")
-        # for depth in range(1,20):
-        _, move = GameTree(game_state).minimax(4, True, float('-inf'), float('inf'))
-        self.propose_move(move)
-        # print("MAX DEPTH EXECUTED")
+        depth = 1
+        while True:
+            _, move = GameTree(game_state).minimax(depth, True, float('-inf'), float('inf'))
+            self.propose_move(move)
+            depth += 1
             
 
     # Generate list of legal moves [x]
