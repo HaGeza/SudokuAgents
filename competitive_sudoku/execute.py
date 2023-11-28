@@ -4,16 +4,23 @@
 
 import os
 from pathlib import Path
+import subprocess
 import tempfile
 
 
 def execute_command(command: str) -> str:
-    import subprocess
     try:
-        output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True)
-    except subprocess.CalledProcessError as proc:
-        output = proc.output
-    return output.decode("utf-8").strip()
+        result = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            shell=True,
+        )
+        output = result.stdout or result.stderr
+    except Exception as e:
+        output = str(e)
+    return output.strip()
 
 
 def solve_sudoku(solve_sudoku_path: str, board_text: str, options: str='') -> str:

@@ -27,3 +27,11 @@ version v9:
 
 version v10:
 - Minor updates for the 2022 course
+
+version v11:
+- Added a script play_match.py
+
+version v12:
+- Fix play_match.py such that it runs on Windows
+- Added a --quiet flag to simulate_game.py
+- Added a --verbose flag to play_math.py
