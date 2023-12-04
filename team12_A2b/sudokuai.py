@@ -7,6 +7,29 @@ import numpy as np
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
 
+class GameTree: pass
+
+class AvailabilitySlice:
+    def __init__(self, game_tree: GameTree, i: int, j: int):
+        self.available = game_tree.available
+
+        self.top, self.bottom, self.left, self.right = game_tree._get_block_boundaries(i, j)
+        self.i = i        
+        self.j = j
+        self.k = game_tree.board[i, j] - 1
+
+        self.channel = self.available[self.i, self.j, :]
+        self.row = self.available[self.i, :, self.k]
+        self.column = self.available[:, self.j, self.k]
+        self.block = self.available[self.top:self.bottom, self.left:self.right, :]
+
+
+    def restore(self) -> None:
+        self.available[self.i, self.j, :] = self.channel
+        self.available[self.i, :, self.k] = self.row
+        self.available[:, self.j, self.k] = self.column
+        self.available[self.top:self.bottom, self.left:self.right, :] = self.block
+
 
 class GameTree:
     """
@@ -55,6 +78,33 @@ class GameTree:
         ]
     ]
 
+
+    def _get_block_boundaries(self, i: int, j: int) -> (int, int, int, int):
+        m = self.gs.board.m
+        n = self.gs.board.n
+
+        block_i = i // m
+        block_j = j // n
+        return ((block_i * m), ((block_i + 1) * m), (block_j * n), ((block_j + 1) * n))
+
+
+    def _get_available_to_update(self, i: int, j: int) -> AvailabilitySlice:
+        return AvailabilitySlice(self, i, j)
+
+
+    def _update_available(self, i: int, j: int) -> None:
+        value = self.board[i, j]
+        if value == SudokuBoard.empty:
+            return
+
+        top, bottom, left, right = self._get_block_boundaries(i, j)
+
+        self.available[i, j, :] = False
+        self.available[i, :, value - 1] = False
+        self.available[:, j, value - 1] = False
+        self.available[top:bottom, left:right, value - 1] = False
+
+
     def __init__(self, game_state: GameState):
         """
         Initialize the game tree with the given game state. Also stores the
@@ -65,9 +115,16 @@ class GameTree:
 
         self.gs = game_state
         self.h_scores = [0, 0]
-        self.board = np.array([[
-            self.gs.board.get(i, j) for j in range(self.gs.board.N)]
-                                    for i in range(self.gs.board.N)])
+
+        N = self.gs.board.N
+
+        self.board = np.full((N, N), SudokuBoard.empty, dtype=int)
+        self.available = np.full((N, N, N), True, dtype=bool)
+
+        for i in range(N):
+            for j in range(N):
+                self.board[i, j] = self.gs.board.get(i, j)
+                self._update_available(i, j)
 
 
     def _get_block(self, i: int, j: int) -> np.array:
@@ -78,12 +135,8 @@ class GameTree:
         @param j: column index 
         """
 
-        m = self.gs.board.m
-        n = self.gs.board.n
-
-        block_i = i // m
-        block_j = j // n
-        return self.board[(block_i * m):((block_i + 1) * m), (block_j * n):((block_j + 1) * n)]
+        top, bottom, left, right = self._get_block_boundaries(i, j)
+        return self.board[top:bottom, left:right]
 
 
     def _update_score(self, reward: float, maximizer: bool) -> None:    
@@ -99,7 +152,7 @@ class GameTree:
         self.h_scores[score_ind] += reward
 
 
-    def _apply_move(self, move: Move, maximizer: bool, last_move: bool) -> float:
+    def _apply_move(self, move: Move, maximizer: bool, last_move: bool) -> (float, AvailabilitySlice):
         """
         Put `move.value` into cell `(move.i, move.j)`. Check if the row, column and block are filled in,
         or if the opposing player will be able to fill them in on the next move.
@@ -112,7 +165,9 @@ class GameTree:
 
         N = self.gs.board.N
 
+        previous_available = self._get_available_to_update(move.i, move.j)
         self.board[move.i, move.j] = move.value
+        self._update_available(move.i, move.j)
 
         # Count the number of empty cells in the row, column and block
         row_cnt = np.sum(self.board[move.i, :] == SudokuBoard.empty)
@@ -121,14 +176,14 @@ class GameTree:
 
         # Filling in a region gives reward, but leaving it with just 1 unfilled cell gives penalty,
         # since the other player will (most likely) fill it in on the next move.
-        reward = self.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0] 
+        reward = self.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0]
                 #  last_move * self.PENALTY[row_cnt == 1][col_cnt == 1][box_cnt == 1]
         self._update_score(reward, maximizer)        
 
-        return reward
+        return (reward, previous_available)
 
     
-    def _undo_move(self, move: Move, reward: int, maximizer: bool) -> None:
+    def _undo_move(self, move: Move, maximizer: bool, reward: int, previous_available: AvailabilitySlice) -> None:
         """
         Undo `move`, i.e. put `SudokuBoard.empty` into cell `(move.i, move.j)`.
         Subtract `reward` from the score of the relevant player.
@@ -139,23 +194,10 @@ class GameTree:
         """
 
         self.board[move.i, move.j] = SudokuBoard.empty
+        previous_available.restore()
         self._update_score(-reward, maximizer)
 
 
-    def _move_is_legal(self, i: int, j: int, value: int) -> bool:
-        """
-        Check if a move is legal.
-
-        @param i: row index
-        @param j: column index
-        @param value: value to be placed 
-        """
-
-        return value not in self.board[i, :] \
-            and value not in self.board[:, j] \
-            and value not in self._get_block(i, j)
-    
-    
     def _evaluate(self) -> float:
         """"
         Evaluate the current game state.
@@ -190,9 +232,9 @@ class GameTree:
 
         if maximizer:
             for move in all_moves:
-                reward = self._apply_move(move, True, depth == 1)
+                reward, previous_available = self._apply_move(move, True, depth == 1)
                 score, _ = self.minimax(depth - 1, False, alpha, beta)
-                self._undo_move(move, reward, True)
+                self._undo_move(move, True, reward, previous_available)
 
                 if score > best_score:
                     best_score = score
@@ -203,9 +245,9 @@ class GameTree:
                     break
         else:
             for move in all_moves:
-                reward = self._apply_move(move, False, depth == 1)
+                reward, previous_available = self._apply_move(move, False, depth == 1)
                 score, _ = self.minimax(depth - 1, True, alpha, beta)
-                self._undo_move(move, reward, False)
+                self._undo_move(move, False, reward, previous_available)
 
                 if score < best_score:
                     best_score = score
@@ -227,9 +269,9 @@ class GameTree:
         N = board.N
 
         def possible(i, j, value):
-            return self.board[i, j] == SudokuBoard.empty \
-                   and not TabooMove(i, j, value) in self.gs.taboo_moves \
-                   and self._move_is_legal(i, j, value)
+            return self.available[i, j, value - 1] \
+                   and self.board[i, j] == SudokuBoard.empty \
+                   and not TabooMove(i, j, value) in self.gs.taboo_moves
 
         return [Move(i, j, value) for i in range(N) for j in range(N)
                 for value in range(1, N+1) if possible(i, j, value)]
@@ -250,13 +292,13 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         for depth in range(game_state.board.N**2):
             tree = GameTree(game_state)
             score, move = tree.minimax(depth, True, float('-inf'), float('inf'))
-            # print(f'A2 SCORE: {score}')
+            # print(f'A2B SCORE: {score}')
 
             if move is None:
                 self.propose_move(random.choice(tree.get_possible_moves()))
             else:
                 self.propose_move(move)
-            # print(f'A2 DEPTH: {depth}')
+            print(f'A2B DEPTH: {depth}')
             depth += 1
             
 
