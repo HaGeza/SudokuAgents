@@ -247,16 +247,13 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
     # N.B. This is a very naive implementation.
     def compute_best_move(self, game_state: GameState) -> None:
+        tree = GameTree(game_state)
         for depth in range(game_state.board.N**2):
-            tree = GameTree(game_state)
             score, move = tree.minimax(depth, True, float('-inf'), float('inf'))
-            # print(f'A2 SCORE: {score}')
 
             if move is None:
                 self.propose_move(random.choice(tree.get_possible_moves()))
             else:
                 self.propose_move(move)
-            # print(f'A2 DEPTH: {depth}')
-            depth += 1
-            
+            # print(f'A2: {depth}, {move}, {score}')
 
