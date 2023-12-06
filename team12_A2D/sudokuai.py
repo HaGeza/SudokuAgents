@@ -124,7 +124,7 @@ class GameTree:
         self.num_empty = num_empty
 
 
-    def copy(self) -> GameTree:
+    def _copy(self) -> GameTree:
         """
         Copy the game tree. Every element is copied, except for the game state.
 
@@ -133,30 +133,6 @@ class GameTree:
         
         return GameTree(self.gs, self.h_scores.copy(), self.board.copy(),
                         self.available.copy(), self.taboo_moves.copy(), self.num_empty)
-
-
-    def from_game_state(game_state: GameState) -> GameTree:
-        """
-        Initialize the game tree from the given game state. 
-
-        @param game_state: the GameState object
-        @return: the GameTree object
-        """
-
-        N = game_state.board.N
-        board = np.full((N, N), SudokuBoard.empty, dtype=int)
-        available = np.full((N, N, N), True, dtype=bool)
-
-        gt = GameTree(game_state, [0, 0], board, available, game_state.taboo_moves, 0)
-
-        for i in range(N):
-            for j in range(N):
-                gt.board[i, j] = game_state.board.get(i, j)
-                gt._update_available(i, j)
-
-        gt.num_empty = np.sum(gt.board == SudokuBoard.empty)
-
-        return gt
 
 
     def _get_block(self, i: int, j: int) -> np.array:
@@ -214,14 +190,14 @@ class GameTree:
         @return: reward
         """
 
-        gt = self.copy()
+        gt = self._copy()
 
         N = gt.gs.board.N
         gt.board[move.i, move.j] = move.value
         gt._update_available(move.i, move.j)
 
         if gt._is_taboo_state():
-            gt = self.copy()
+            gt = self._copy()
             gt.taboo_moves.append(TabooMove(move.i, move.j, move.value))
             return gt
 
@@ -237,11 +213,12 @@ class GameTree:
         return gt
 
 
-    def _finish_term(self) -> float:
-        return 10 * (1 - (self.num_empty / (self.gs.board.N**2))) * (-1 if self.num_empty % 2 == 1 else 1)
+    def _finish_term(self, maximizer) -> float:
+        return 10 * (1 - (self.num_empty / (self.gs.board.N**2))) * \
+            (1 if self.num_empty % 2 == maximizer else -1)
 
     
-    def _evaluate(self) -> float:
+    def _evaluate(self, maximizer) -> float:
         """"
         Evaluate the current game state.
 
@@ -249,8 +226,48 @@ class GameTree:
         """
 
         current_player = self.gs.current_player() - 1
-        # print(self._finish_term())
-        return self.h_scores[current_player] - self.h_scores[1 - current_player] + self._finish_term()
+        return self.h_scores[current_player] - self.h_scores[1 - current_player] + \
+               self._finish_term(maximizer)
+
+
+    def _get_possible_moves(self, sort=True) -> [Move]:
+        """
+        Get all possible moves for the current game state. 
+        """
+
+        available_inds = np.argwhere(self.available) + [0, 0, 1]
+        available_inds = np.random.permutation(available_inds)
+
+        # Count the number of times each value occurs in self.board
+        if sort:
+            value_counts = np.bincount(self.board.flatten(), minlength=self.gs.board.N+1)
+            available_inds = sorted(available_inds, key=lambda x: value_counts[x[2]])
+
+        return [Move(*inds) for inds in available_inds if TabooMove(*inds) not in self.taboo_moves]
+
+
+    def from_game_state(game_state: GameState) -> GameTree:
+        """
+        Initialize the game tree from the given game state. 
+
+        @param game_state: the GameState object
+        @return: the GameTree object
+        """
+
+        N = game_state.board.N
+        board = np.full((N, N), SudokuBoard.empty, dtype=int)
+        available = np.full((N, N, N), True, dtype=bool)
+
+        gt = GameTree(game_state, [0, 0], board, available, game_state.taboo_moves, 0)
+
+        for i in range(N):
+            for j in range(N):
+                gt.board[i, j] = game_state.board.get(i, j)
+                gt._update_available(i, j)
+
+        gt.num_empty = np.sum(gt.board == SudokuBoard.empty)
+
+        return gt
 
 
     def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move, int):
@@ -264,11 +281,11 @@ class GameTree:
         @return: (score, move) tuple
         """
         if depth == 0:
-            return (self._evaluate(), None, 0)
+            return (self._evaluate(maximizer), None, 0)
 
-        all_moves = self.get_possible_moves()
+        all_moves = self._get_possible_moves()
         if len(all_moves) == 0:
-            return (self._evaluate(), None, 0)
+            return (self._evaluate(maximizer), None, 0)
 
         best_score = float('-inf') if maximizer else float('inf')
         best_move = None
@@ -305,22 +322,6 @@ class GameTree:
 
         return best_score, best_move, pruned
 
-
-    def get_possible_moves(self, sort=True) -> [Move]:
-        """
-        Get all possible moves for the current game state. 
-        """
-
-        available_inds = np.argwhere(self.available) + [0, 0, 1]
-        available_inds = np.random.permutation(available_inds)
-
-        # Count the number of times each value occurs in self.board
-        if sort:
-            value_counts = np.bincount(self.board.flatten(), minlength=self.gs.board.N+1)
-            available_inds = sorted(available_inds, key=lambda x: value_counts[x[2]])
-
-        return [Move(*inds) for inds in available_inds if TabooMove(*inds) not in self.taboo_moves]
-
     
     def get_first_possible_move(self) -> Move:
         """
@@ -343,12 +344,15 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     # N.B. This is a very naive implementation.
     def compute_best_move(self, game_state: GameState) -> None:
         tree = GameTree.from_game_state(game_state)
-        for depth in range(game_state.board.N**2):
+        depth = 0
+        while True:
             _, move, _ = tree.minimax(depth, True, float('-inf'), float('inf'))
 
             if move is None:
                 move = tree.get_first_possible_move()
             
             self.propose_move(move)
-            # print(f'A2D:: Depth: {depth}, Move: {move}, Pruned: {pruned}')
+            print(f'D : Depth: {depth}, Move: {move}')
+            depth += 1
+            
 

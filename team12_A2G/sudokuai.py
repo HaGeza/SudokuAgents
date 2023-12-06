@@ -13,6 +13,7 @@ from copy import deepcopy
 # Taboo state detection implemented
 # Sorting legal moves implemented
 # Basic heuristic for flipping with taboo
+# Bookkeeping for empty elements (No efficiency gain)
 
 class GameTree: pass
 
@@ -64,35 +65,62 @@ class GameTree:
     ]
 
 
-    def _get_block_boundaries(self, i: int, j: int) -> (int, int, int, int):
+    def _get_block_indices(self, i: int, j: int) -> (int, int):
+        """
+        Get block indices for cell (i, j)
+
+        @param i: row index
+        @param j: column index
+        @return: (block_i, block_j) tuple
+        """        
+
+        return i // self.gs.board.m, j // self.gs.board.n
+
+
+    def _get_block_boundaries(self, i: int, j: int, block_i: int, block_j: int) -> (int, int, int, int):
         """
         Get the boundaries of the block where the cell (i,j) is located. 
 
         @param i: row index
         @param j: column index
+        @param block_i: block row index
+        @param block_j: block column index
         @return: (top, bottom, left, right) tuple
         """
+
         m = self.gs.board.m
         n = self.gs.board.n
-
-        block_i = i // m
-        block_j = j // n
         return ((block_i * m), ((block_i + 1) * m), (block_j * n), ((block_j + 1) * n))
 
 
-    def _update_available(self, i: int, j: int) -> None:
+    def _update_empty(self, i: int, j: int, block_i: int, block_j: int) -> None:
+        """
+        Update the number of empty cells in the row, column and block of cell (i,j). 
+
+        @param i: row index
+        @param j: column index
+        @param block_i: block row index
+        @param block_j: block column index
+        """
+
+        self.row_empty[i] -= 1
+        self.column_empty[j] -= 1
+        self.block_empty[block_i, block_j] -= 1
+        self.num_empty -= 1
+
+
+    def _update_available(self, i: int, j: int, block_i: int, block_j: int) -> None:
         """
         Update the available moves, after applying Move(i,j,value).
 
         @param i: row index
         @param j: column index
+        @param block_i: block row index
+        @param block_j: block column index
         """
 
         value = self.board[i, j]
-        if value == SudokuBoard.empty:
-            return
-
-        top, bottom, left, right = self._get_block_boundaries(i, j)
+        top, bottom, left, right = self._get_block_boundaries(i, j, block_i, block_j)
         # No move is available in cell (i,j) anymore
         self.available[i, j, :] = False
         # value cannot be put into row i anymore
@@ -104,7 +132,8 @@ class GameTree:
 
 
     def __init__(self, gs: GameState, h_scores: [int], board: np.array,
-                 available: np.array, taboo_moves: [TabooMove], num_empty: int):
+                 available: np.array, taboo_moves: [TabooMove], num_empty: int,
+                 row_empty: np.array, column_empty: np.array, block_empty: np.array):
         """
         Initialize the game tree. 
 
@@ -122,6 +151,9 @@ class GameTree:
         self.available = available
         self.taboo_moves = taboo_moves
         self.num_empty = num_empty
+        self.row_empty = row_empty
+        self.column_empty = column_empty
+        self.block_empty = block_empty
 
 
     def copy(self) -> GameTree:
@@ -132,7 +164,8 @@ class GameTree:
         """
         
         return GameTree(self.gs, self.h_scores.copy(), self.board.copy(),
-                        self.available.copy(), self.taboo_moves.copy(), self.num_empty)
+                        self.available.copy(), self.taboo_moves.copy(), self.num_empty,
+                        self.column_empty.copy(), self.row_empty.copy(), self.block_empty.copy())
 
 
     def from_game_state(game_state: GameState) -> GameTree:
@@ -146,15 +179,20 @@ class GameTree:
         N = game_state.board.N
         board = np.full((N, N), SudokuBoard.empty, dtype=int)
         available = np.full((N, N, N), True, dtype=bool)
+        row_empty = np.zeros(N)
+        column_empty = np.zeros(N)
+        block_empty = np.zeros((game_state.board.m, game_state.board.n))
 
-        gt = GameTree(game_state, [0, 0], board, available, game_state.taboo_moves, 0)
+        gt = GameTree(game_state, [0, 0], board, available, game_state.taboo_moves, 
+                      0, row_empty, column_empty, block_empty)
 
         for i in range(N):
             for j in range(N):
                 gt.board[i, j] = game_state.board.get(i, j)
-                gt._update_available(i, j)
-
-        gt.num_empty = np.sum(gt.board == SudokuBoard.empty)
+                if gt.board[i, j] != SudokuBoard.empty:
+                    block_i, block_j = gt._get_block_indices(i, j)
+                    gt._update_available(i, j, block_i, block_j)
+                    gt._update_empty(i, j, block_i, block_j)
 
         return gt
 
@@ -195,14 +233,6 @@ class GameTree:
         return np.any((np.sum(self.available, axis=2) + (self.board != SudokuBoard.empty)) == 0)
 
 
-    def _get_missing_counts(self, i: int, j: int) -> (int, int, int):
-        # Count the number of empty cells in the row, column and block
-        row_cnt = np.sum(self.board[i, :] == SudokuBoard.empty)
-        col_cnt = np.sum(self.board[:, j] == SudokuBoard.empty)
-        box_cnt = np.sum(self._get_block(i, j) == SudokuBoard.empty)
-        return row_cnt, col_cnt, box_cnt
-
-
     def _apply_move(self, move: Move, maximizer: bool, last_move: bool) -> GameTree:
         """
         Put `move.value` into cell `(move.i, move.j)`. Check if the row, column and block are filled in,
@@ -218,20 +248,23 @@ class GameTree:
 
         N = gt.gs.board.N
         gt.board[move.i, move.j] = move.value
-        gt._update_available(move.i, move.j)
+
+        block_i, block_j = gt._get_block_indices(move.i, move.j)
+        gt._update_available(move.i, move.j, block_i, block_j)
 
         if gt._is_taboo_state():
             gt = self.copy()
             gt.taboo_moves.append(TabooMove(move.i, move.j, move.value))
             return gt
 
-        gt.num_empty -= 1
+        gt._update_empty(move.i, move.j, block_i, block_j)
+        reward = GameTree.REWARDS[self.row_empty[move.i] == 0][
+                              self.column_empty[move.j] == 0][
+                              self.block_empty[block_i, block_j] == 0] - \
+                 last_move * GameTree.PENALTY[self.row_empty[move.i] == 1][
+                              self.column_empty[move.j] == 1][
+                              self.block_empty[block_i, block_j] == 1]
 
-        row_cnt, col_cnt, box_cnt = gt._get_missing_counts(move.i, move.j)
-        # Filling in a region gives reward, but leaving it with just 1 unfilled cell gives penalty,
-        # since the other player will (most likely) fill it in on the next move.
-        reward = self.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0] - \
-                 last_move * self.PENALTY[row_cnt == 1][col_cnt == 1][box_cnt == 1]
         gt._update_score(reward, maximizer)        
 
         return gt
@@ -249,7 +282,6 @@ class GameTree:
         """
 
         current_player = self.gs.current_player() - 1
-        # print(self._finish_term())
         return self.h_scores[current_player] - self.h_scores[1 - current_player] + self._finish_term()
 
 
@@ -350,5 +382,5 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 move = tree.get_first_possible_move()
             
             self.propose_move(move)
-            # print(f'A2D:: Depth: {depth}, Move: {move}, Pruned: {pruned}')
+            print(f'E : Depth: {depth}, Move: {move}')
 
