@@ -185,6 +185,14 @@ class GameTree:
         return np.any((np.sum(self.available, axis=2) + (self.board != SudokuBoard.empty)) == 0)
 
 
+    def _get_missing_counts(self, i: int, j: int) -> (int, int, int):
+        # Count the number of empty cells in the row, column and block
+        row_cnt = np.sum(self.board[i, :] == SudokuBoard.empty)
+        col_cnt = np.sum(self.board[:, j] == SudokuBoard.empty)
+        box_cnt = np.sum(self._get_block(i, j) == SudokuBoard.empty)
+        return row_cnt, col_cnt, box_cnt
+
+
     def _apply_move(self, move: Move, maximizer: bool, last_move: bool) -> GameTree:
         """
         Put `move.value` into cell `(move.i, move.j)`. Check if the row, column and block are filled in,
@@ -207,11 +215,7 @@ class GameTree:
             gt.taboo_moves.append(TabooMove(move.i, move.j, move.value))
             return gt
 
-        # Count the number of empty cells in the row, column and block
-        row_cnt = np.sum(gt.board[move.i, :] == SudokuBoard.empty)
-        col_cnt = np.sum(gt.board[:, move.j] == SudokuBoard.empty)
-        box_cnt = np.sum(gt._get_block(move.i, move.j) == SudokuBoard.empty)
-
+        row_cnt, col_cnt, box_cnt = gt._get_missing_counts(move.i, move.j)
         # Filling in a region gives reward, but leaving it with just 1 unfilled cell gives penalty,
         # since the other player will (most likely) fill it in on the next move.
         reward = self.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0] - \
@@ -263,7 +267,7 @@ class GameTree:
 
                 alpha = max(alpha, best_score)
                 if alpha >= beta:
-                    print(f"C-Pruned: {len(all_moves) - i}")
+                    print(f"D-Pruned: {len(all_moves) - i}")
                     break
         else:
             for i, move in enumerate(all_moves):
@@ -275,7 +279,7 @@ class GameTree:
 
                 beta = min(beta, best_score)
                 if alpha >= beta:
-                    print(f"C-Pruned: {len(all_moves) - i}")
+                    print(f"D-Pruned: {len(all_moves) - i}")
                     break
 
         return best_score, best_move
@@ -287,7 +291,26 @@ class GameTree:
         """
 
         available_inds = np.argwhere(self.available) + [0, 0, 1]
+
+        # Count the number of times each value occurs in self.board
+        counts = np.bincount(self.board.flatten(), minlength=self.gs.board.N+1)
+        available_inds = sorted(available_inds, key=lambda x: counts[x[2]])
+
+        # Calculate missing counts for all rows, columns, and blocks
+        # Create a tensor to map these counts to each move in available_inds
+        # Sum up the tensors containing the missing counts for each region, giving
+        # an approximation of the missing elements for
+        # sort available_inds in decreasing order of the sum of
+
         return [Move(*inds) for inds in available_inds if TabooMove(*inds) not in self.taboo_moves]
+
+    
+    def get_first_possible_move(self) -> Move:
+        """
+        Get the first possible move for the current game state. 
+        """
+
+        return Move(*(np.argwhere(self.available) + [0, 0, 1]))
 
 
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
@@ -307,8 +330,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
             _, move = tree.minimax(depth, True, float('-inf'), float('inf'))
 
             if move is None:
-                self.propose_move(random.choice(tree.get_possible_moves()))
-            else:
-                self.propose_move(move)
-            print(f'A2C: {depth}, {move}')
+                move = random.choice(tree.get_possible_moves())
+
+            self.propose_move(move)
+            print(f'A2D: {depth}, {move}')
 
