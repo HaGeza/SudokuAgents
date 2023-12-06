@@ -232,7 +232,7 @@ class GameTree:
         return self.h_scores[current_player] - self.h_scores[1 - current_player]
 
 
-    def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move):
+    def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move, int):
         """
         Minimax algorithm with alpha-beta pruning. 
 
@@ -243,19 +243,22 @@ class GameTree:
         @return: (score, move) tuple
         """
         if depth == 0:
-            return (self._evaluate(), None)
+            return (self._evaluate(), None, 0)
 
         all_moves = self.get_possible_moves()
-        # random.shuffle(all_moves)
+        random.shuffle(all_moves)
         if len(all_moves) == 0:
-            return (self._evaluate(), None)
+            return (self._evaluate(), None, 0)
 
         best_score = float('-inf') if maximizer else float('inf')
         best_move = None
+        pruned = 0
 
         if maximizer:
             for i, move in enumerate(all_moves):
-                score, _ = self._apply_move(move, True, depth == 1).minimax(depth - 1, False, alpha, beta)
+                score, _, sub_pruned = self._apply_move(move, True, depth == 1).minimax(
+                                                        depth - 1, False, alpha, beta)
+                pruned += sub_pruned
 
                 if score > best_score:
                     best_score = score
@@ -263,11 +266,13 @@ class GameTree:
 
                 alpha = max(alpha, best_score)
                 if alpha >= beta:
-                    print(f"C-Pruned: {len(all_moves) - i}")
+                    pruned += len(all_moves) - i
                     break
         else:
             for i, move in enumerate(all_moves):
-                score, _ = self._apply_move(move, False, depth == 1).minimax(depth - 1, True, alpha, beta)
+                score, _, sub_pruned = self._apply_move(move, False, depth == 1).minimax(
+                                                        depth - 1, True, alpha, beta)
+                pruned += sub_pruned
 
                 if score < best_score:
                     best_score = score
@@ -275,10 +280,10 @@ class GameTree:
 
                 beta = min(beta, best_score)
                 if alpha >= beta:
-                    print(f"C-Pruned: {len(all_moves) - i}")
+                    pruned += len(all_moves) - i
                     break
 
-        return best_score, best_move
+        return best_score, best_move, pruned
 
 
     def get_possible_moves(self, sort=False) -> [Move]:
@@ -288,6 +293,14 @@ class GameTree:
 
         available_inds = np.argwhere(self.available) + [0, 0, 1]
         return [Move(*inds) for inds in available_inds if TabooMove(*inds) not in self.taboo_moves]
+
+
+    def get_first_possible_move(self) -> Move:
+        """
+        Get the first possible move for the current game state. 
+        """
+
+        return Move(*(np.argwhere(self.available)[0] + [0, 0, 1]))
 
 
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
@@ -304,11 +317,11 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     def compute_best_move(self, game_state: GameState) -> None:
         tree = GameTree.from_game_state(game_state)
         for depth in range(game_state.board.N**2):
-            _, move = tree.minimax(depth, True, float('-inf'), float('inf'))
+            _, move, pruned = tree.minimax(depth, True, float('-inf'), float('inf'))
 
             if move is None:
-                self.propose_move(random.choice(tree.get_possible_moves()))
-            else:
-                self.propose_move(move)
-            print(f'A2C: {depth}, {move}')
+                move = tree.get_first_possible_move()
+            
+            self.propose_move(move)
+            print(f'A2C:: Depth: {depth}, Move: {move}, Pruned: {pruned}')
 
