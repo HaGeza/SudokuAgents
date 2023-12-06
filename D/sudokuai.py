@@ -10,6 +10,10 @@ from copy import deepcopy
 
 class GameTree: pass
 
+# Basic numpy operations implemented
+# Availability tensor implemented
+# Taboo state detection implemented
+
 class GameTree:
     """
     Game tree for Competitive Sudoku. 
@@ -98,7 +102,7 @@ class GameTree:
 
 
     def __init__(self, gs: GameState, h_scores: [int], board: np.array,
-                 available: np.array, taboo_moves: [TabooMove]):
+                 available: np.array, taboo_moves: [TabooMove], num_empty: int):
         """
         Initialize the game tree. 
 
@@ -107,6 +111,7 @@ class GameTree:
         @param board: the current board as an np.array
         @param available: the available values for each cell as an np.array
         @param taboo_moves: list of taboo moves
+        @param num_empty: number of empty cells
         """                 
 
         self.gs = gs
@@ -114,6 +119,7 @@ class GameTree:
         self.board = board
         self.available = available
         self.taboo_moves = taboo_moves
+        self.num_empty = num_empty
 
 
     def copy(self) -> GameTree:
@@ -124,7 +130,7 @@ class GameTree:
         """
         
         return GameTree(self.gs, self.h_scores.copy(), self.board.copy(),
-                        self.available.copy(), self.taboo_moves.copy())
+                        self.available.copy(), self.taboo_moves.copy(), self.num_empty)
 
 
     def from_game_state(game_state: GameState) -> GameTree:
@@ -139,12 +145,14 @@ class GameTree:
         board = np.full((N, N), SudokuBoard.empty, dtype=int)
         available = np.full((N, N, N), True, dtype=bool)
 
-        gt = GameTree(game_state, [0, 0], board, available, game_state.taboo_moves)
+        gt = GameTree(game_state, [0, 0], board, available, game_state.taboo_moves, 0)
 
         for i in range(N):
             for j in range(N):
                 gt.board[i, j] = game_state.board.get(i, j)
                 gt._update_available(i, j)
+
+        gt.num_empty = np.sum(gt.board == SudokuBoard.empty)
 
         return gt
 
@@ -215,6 +223,8 @@ class GameTree:
             gt.taboo_moves.append(TabooMove(move.i, move.j, move.value))
             return gt
 
+        gt.num_empty -= 1
+
         row_cnt, col_cnt, box_cnt = gt._get_missing_counts(move.i, move.j)
         # Filling in a region gives reward, but leaving it with just 1 unfilled cell gives penalty,
         # since the other player will (most likely) fill it in on the next move.
@@ -223,6 +233,10 @@ class GameTree:
         gt._update_score(reward, maximizer)        
 
         return gt
+
+
+    def _finish_term(self) -> float:
+        return 10 * (1 - (self.num_empty / (self.gs.board.N**2))) * (-1 if self.num_empty % 2 == 1 else 1)
 
     
     def _evaluate(self) -> float:
@@ -233,7 +247,8 @@ class GameTree:
         """
 
         current_player = self.gs.current_player() - 1
-        return self.h_scores[current_player] - self.h_scores[1 - current_player]
+        # print(self._finish_term())
+        return self.h_scores[current_player] - self.h_scores[1 - current_player] + self._finish_term()
 
 
     def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move, int):
@@ -259,7 +274,7 @@ class GameTree:
 
         if maximizer:
             for i, move in enumerate(all_moves):
-                score, _, _ = self._apply_move(move, True, depth == 1).minimax(
+                score, _, sub_pruned = self._apply_move(move, True, depth == 1).minimax(
                                                         depth - 1, False, alpha, beta)
                 pruned += sub_pruned
 

@@ -6,7 +6,12 @@ import random
 import numpy as np
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
+from copy import deepcopy
 
+# Basic numpy operations implemented
+# Availability tensor implemented
+
+class GameTree: pass
 
 class GameTree:
     """
@@ -55,7 +60,40 @@ class GameTree:
         ]
     ]
 
-    def __init__(self, game_state: GameState):
+
+    def _get_block_boundaries(self, i: int, j: int) -> (int, int, int, int):
+        m = self.gs.board.m
+        n = self.gs.board.n
+
+        block_i = i // m
+        block_j = j // n
+        return ((block_i * m), ((block_i + 1) * m), (block_j * n), ((block_j + 1) * n))
+
+
+    def _update_available(self, i: int, j: int) -> None:
+        value = self.board[i, j]
+        if value == SudokuBoard.empty:
+            return
+
+        top, bottom, left, right = self._get_block_boundaries(i, j)
+        self.available[i, j, :] = False
+        self.available[i, :, value - 1] = False
+        self.available[:, j, value - 1] = False
+        self.available[top:bottom, left:right, value - 1] = False
+
+
+    def __init__(self, gs: GameState, h_scores: [int], board: np.array, available: np.array):
+        self.gs = gs
+        self.h_scores = h_scores
+        self.board = board
+        self.available = available
+
+
+    def copy(self) -> GameTree:
+        return GameTree(self.gs, self.h_scores.copy(), self.board.copy(), self.available.copy())
+
+
+    def from_game_state(game_state: GameState) -> GameTree:
         """
         Initialize the game tree with the given game state. Also stores the
         heuristic scores of the players, which can be used to evaluate a game state.
@@ -63,11 +101,18 @@ class GameTree:
         @param game_state: the GameState object
         """
 
-        self.gs = game_state
-        self.h_scores = [0, 0]
-        self.board = np.array([[
-            self.gs.board.get(i, j) for j in range(self.gs.board.N)]
-                                    for i in range(self.gs.board.N)])
+        N = game_state.board.N
+        board = np.full((N, N), SudokuBoard.empty, dtype=int)
+        available = np.full((N, N, N), True, dtype=bool)
+
+        gt = GameTree(game_state, [0, 0], board, available)
+
+        for i in range(N):
+            for j in range(N):
+                gt.board[i, j] = game_state.board.get(i, j)
+                gt._update_available(i, j)
+
+        return gt
 
 
     def _get_block(self, i: int, j: int) -> np.array:
@@ -78,12 +123,8 @@ class GameTree:
         @param j: column index 
         """
 
-        m = self.gs.board.m
-        n = self.gs.board.n
-
-        block_i = i // m
-        block_j = j // n
-        return self.board[(block_i * m):((block_i + 1) * m), (block_j * n):((block_j + 1) * n)]
+        top, bottom, left, right = self._get_block_boundaries(i, j)
+        return self.board[top:bottom, left:right]
 
 
     def _update_score(self, reward: float, maximizer: bool) -> None:    
@@ -99,7 +140,7 @@ class GameTree:
         self.h_scores[score_ind] += reward
 
 
-    def _apply_move(self, move: Move, maximizer: bool, last_move: bool) -> float:
+    def _apply_move(self, move: Move, maximizer: bool, last_move: bool) -> GameTree:
         """
         Put `move.value` into cell `(move.i, move.j)`. Check if the row, column and block are filled in,
         or if the opposing player will be able to fill them in on the next move.
@@ -110,51 +151,25 @@ class GameTree:
         @return: reward
         """
 
-        N = self.gs.board.N
+        gt = self.copy()
 
-        self.board[move.i, move.j] = move.value
+        N = gt.gs.board.N
+        gt.board[move.i, move.j] = move.value
+        gt._update_available(move.i, move.j)
 
         # Count the number of empty cells in the row, column and block
-        row_cnt = np.sum(self.board[move.i, :] == SudokuBoard.empty)
-        col_cnt = np.sum(self.board[:, move.j] == SudokuBoard.empty)
-        box_cnt = np.sum(self._get_block(move.i, move.j) == SudokuBoard.empty)
+        row_cnt = np.sum(gt.board[move.i, :] == SudokuBoard.empty)
+        col_cnt = np.sum(gt.board[:, move.j] == SudokuBoard.empty)
+        box_cnt = np.sum(gt._get_block(move.i, move.j) == SudokuBoard.empty)
 
         # Filling in a region gives reward, but leaving it with just 1 unfilled cell gives penalty,
         # since the other player will (most likely) fill it in on the next move.
-        reward = self.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0] 
-                #  last_move * self.PENALTY[row_cnt == 1][col_cnt == 1][box_cnt == 1]
-        self._update_score(reward, maximizer)        
+        reward = self.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0] - \
+                 last_move * self.PENALTY[row_cnt == 1][col_cnt == 1][box_cnt == 1]
+        gt._update_score(reward, maximizer)        
 
-        return reward
+        return gt
 
-    
-    def _undo_move(self, move: Move, reward: int, maximizer: bool) -> None:
-        """
-        Undo `move`, i.e. put `SudokuBoard.empty` into cell `(move.i, move.j)`.
-        Subtract `reward` from the score of the relevant player.
-
-        @param move: the move
-        @param reward: reward that was added
-        @param maximizer: `True` if maximizing player, `False` if minimizing player
-        """
-
-        self.board[move.i, move.j] = SudokuBoard.empty
-        self._update_score(-reward, maximizer)
-
-
-    def _move_is_legal(self, i: int, j: int, value: int) -> bool:
-        """
-        Check if a move is legal.
-
-        @param i: row index
-        @param j: column index
-        @param value: value to be placed 
-        """
-
-        return value not in self.board[i, :] \
-            and value not in self.board[:, j] \
-            and value not in self._get_block(i, j)
-    
     
     def _evaluate(self) -> float:
         """"
@@ -190,9 +205,7 @@ class GameTree:
 
         if maximizer:
             for move in all_moves:
-                reward = self._apply_move(move, True, depth == 1)
-                score, _ = self.minimax(depth - 1, False, alpha, beta)
-                self._undo_move(move, reward, True)
+                score, _ = self._apply_move(move, True, depth == 1).minimax(depth - 1, False, alpha, beta)
 
                 if score > best_score:
                     best_score = score
@@ -203,9 +216,7 @@ class GameTree:
                     break
         else:
             for move in all_moves:
-                reward = self._apply_move(move, False, depth == 1)
-                score, _ = self.minimax(depth - 1, True, alpha, beta)
-                self._undo_move(move, reward, False)
+                score, _ = self._apply_move(move, False, depth == 1).minimax(depth - 1, True, alpha, beta)
 
                 if score < best_score:
                     best_score = score
@@ -227,9 +238,9 @@ class GameTree:
         N = board.N
 
         def possible(i, j, value):
-            return self.board[i, j] == SudokuBoard.empty \
-                   and not TabooMove(i, j, value) in self.gs.taboo_moves \
-                   and self._move_is_legal(i, j, value)
+            return self.available[i, j, value - 1] \
+                   and self.board[i, j] == SudokuBoard.empty \
+                   and not TabooMove(i, j, value) in self.gs.taboo_moves
 
         return [Move(i, j, value) for i in range(N) for j in range(N)
                 for value in range(1, N+1) if possible(i, j, value)]
@@ -247,7 +258,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
     # N.B. This is a very naive implementation.
     def compute_best_move(self, game_state: GameState) -> None:
-        tree = GameTree(game_state)
+        tree = GameTree.from_game_state(game_state)
         for depth in range(game_state.board.N**2):
             score, move = tree.minimax(depth, True, float('-inf'), float('inf'))
 
@@ -255,5 +266,5 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 self.propose_move(random.choice(tree.get_possible_moves()))
             else:
                 self.propose_move(move)
-            # print(f'A2: {depth}, {move}, {score}')
+            print(f'A2B: {depth}, {move}')
 
