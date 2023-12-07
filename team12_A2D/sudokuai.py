@@ -230,7 +230,7 @@ class GameTree:
                self._finish_term(maximizer)
 
 
-    def _get_possible_moves(self, sort=True) -> [Move]:
+    def _get_possible_moves(self) -> [Move]:
         """
         Get all possible moves for the current game state. 
         """
@@ -239,9 +239,8 @@ class GameTree:
         available_inds = np.random.permutation(available_inds)
 
         # Count the number of times each value occurs in self.board
-        if sort:
-            value_counts = np.bincount(self.board.flatten(), minlength=self.gs.board.N+1)
-            available_inds = sorted(available_inds, key=lambda x: value_counts[x[2]])
+        value_counts = np.bincount(self.board.flatten(), minlength=self.gs.board.N+1)
+        available_inds = sorted(available_inds, key=lambda x: value_counts[x[2]], reverse=True)
 
         return [Move(*inds) for inds in available_inds if TabooMove(*inds) not in self.taboo_moves]
 
@@ -346,13 +345,14 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         tree = GameTree.from_game_state(game_state)
         depth = 0
         while True:
-            _, move, _ = tree.minimax(depth, True, float('-inf'), float('inf'))
+            _, move, pruned = tree.minimax(depth, True, float('-inf'), float('inf'))
 
             if move is None:
                 move = tree.get_first_possible_move()
             
             self.propose_move(move)
-            # print(f'D : Depth: {depth}, Move: {move}')
+            if depth < 16:
+                print(f'D : Depth: {depth}, Move: {move}, Pruned: {pruned}')
             depth += 1
             
 

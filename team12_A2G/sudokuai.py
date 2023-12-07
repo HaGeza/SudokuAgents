@@ -2,7 +2,6 @@
 #  Software License, (See accompanying file LICENSE or copy at
 #  https://www.gnu.org/licenses/gpl-3.0.txt)
 
-import random
 import numpy as np
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
@@ -14,6 +13,7 @@ import competitive_sudoku.sudokuai
 # Basic heuristic for flipping with taboo
 # Heuristic for keeping missing element parity advantage
 # More efficient block boundary calculation
+# Change sorting algorithm
 
 class BlockLookupTable:
     """
@@ -29,6 +29,9 @@ class BlockLookupTable:
         """
 
         N = m*n
+        self.m = m
+        self.n = n
+        self.N = N
         # Stores the block indices for each cell
         self.table = np.zeros((N, N, 2), dtype=int)
         # Stores the block boundaries for each cell, in (top, bottom, left, right) format
@@ -41,6 +44,19 @@ class BlockLookupTable:
         for block_j, j in enumerate(range(0, N, m)):
             self.table[:, j:j+m, 1] = block_j
             self.boundaries[:, j:j+m, 2:4] = [j, j+m]
+
+
+    def get_block_values(self, board: np.array) -> np.array:
+        """
+        Get the values of each block in the board.
+
+        @param board: the board
+        @return: the block values
+        """
+
+        return np.array([[board[i:i+self.n, j:j+self.m] 
+                         for j in range(0, self.N, self.m)]
+                         for i in range(0, self.N, self.n)])
 
 
 # Required so functions of GameTree can reference GameTree
@@ -249,18 +265,29 @@ class GameTree:
                self._finish_term(maximizer)
 
 
-    def _get_possible_moves(self, sort=True) -> [Move]:
+    def _get_possible_moves(self) -> [Move]:
         """
         Get all possible moves for the current game state. 
         """
 
+        # Get available elements and shuffle them
         available_inds = np.argwhere(self.available) + [0, 0, 1]
         available_inds = np.random.permutation(available_inds)
 
-        # Count the number of times each value occurs in self.board
-        if sort:
-            value_counts = np.bincount(self.board.flatten(), minlength=self.gs.board.N+1)
-            available_inds = sorted(available_inds, key=lambda x: value_counts[x[2]])
+        # Sort available elements in decreasing order of number of empty 
+        # elements in each region they are part of + number of times the value appears
+        value_counts = np.bincount(self.board.flatten(), minlength=self.gs.board.N+1)
+        row_counts = np.sum(self.board != SudokuBoard.empty, axis=1)
+        column_counts = np.sum(self.board != SudokuBoard.empty, axis=0)
+        block_counts = np.sum(self.blocks.get_block_values(self.board) != SudokuBoard.empty, axis=(2,3))
+
+        priorities = value_counts[available_inds[:, 2]] + \
+                     row_counts[available_inds[:, 0]] + \
+                     column_counts[available_inds[:, 1]] + \
+                     block_counts[*self.blocks.table[available_inds[:, 0], available_inds[:, 1]].T]
+
+        ordering = np.argsort(priorities)
+        available_inds = available_inds[ordering]
 
         return [Move(*inds) for inds in available_inds if TabooMove(*inds) not in self.taboo_moves]
 
@@ -366,13 +393,14 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         tree = GameTree.from_game_state(game_state)
         depth = 0
         while True:
-            _, move, _ = tree.minimax(depth, True, float('-inf'), float('inf'))
+            _, move, pruned = tree.minimax(depth, True, float('-inf'), float('inf'))
 
             if move is None:
                 move = tree.get_first_possible_move()
             
             self.propose_move(move)
-            # print(f'D : Depth: {depth}, Move: {move}')
+            if depth < 16:
+                print(f'G : Depth: {depth}, Move: {move}, Prune: {pruned}')
             depth += 1
             
 
