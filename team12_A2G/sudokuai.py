@@ -6,15 +6,44 @@ import random
 import numpy as np
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
-from copy import deepcopy
 
 # Basic numpy operations implemented
 # Availability tensor implemented
 # Taboo state detection implemented
 # Sorting legal moves implemented
 # Basic heuristic for flipping with taboo
-# Bookkeeping for empty elements (No efficiency gain)
+# Heuristic for keeping missing element parity advantage
+# More efficient block boundary calculation
 
+class BlockLookupTable:
+    """
+    Class for looking up information about the block of cells of the board.
+    """
+
+    def __init__(self, m: int, n: int):
+        """
+        Initialize the lookup table. 
+
+        @param m: number of rows in a block
+        @param n: number of columns in a block
+        """
+
+        N = m*n
+        # Stores the block indices for each cell
+        self.table = np.zeros((N, N, 2), dtype=int)
+        # Stores the block boundaries for each cell, in (top, bottom, left, right) format
+        self.boundaries = np.zeros((N, N, 4), dtype=int)
+
+        for block_i, i in enumerate(range(0, N, n)):
+            self.table[i:i+n, :, 0] = block_i
+            self.boundaries[i:i+n, :, 0:2] = [i, i+n]
+
+        for block_j, j in enumerate(range(0, N, m)):
+            self.table[:, j:j+m, 1] = block_j
+            self.boundaries[:, j:j+m, 2:4] = [j, j+m]
+
+
+# Required so functions of GameTree can reference GameTree
 class GameTree: pass
 
 class GameTree:
@@ -51,7 +80,7 @@ class GameTree:
     ]
 
     """
-    Similar to REWARDS, but indices represent whether or not
+    Same Structure as REWARDS, but indices represent whether or not
     the given region has exactly 1 empty cell. 
     """
     PENALTY = [
@@ -64,76 +93,23 @@ class GameTree:
         ]
     ]
 
-
-    def _get_block_indices(self, i: int, j: int) -> (int, int):
-        """
-        Get block indices for cell (i, j)
-
-        @param i: row index
-        @param j: column index
-        @return: (block_i, block_j) tuple
-        """        
-
-        return i // self.gs.board.m, j // self.gs.board.n
-
-
-    def _get_block_boundaries(self, i: int, j: int, block_i: int, block_j: int) -> (int, int, int, int):
-        """
-        Get the boundaries of the block where the cell (i,j) is located. 
-
-        @param i: row index
-        @param j: column index
-        @param block_i: block row index
-        @param block_j: block column index
-        @return: (top, bottom, left, right) tuple
-        """
-
-        m = self.gs.board.m
-        n = self.gs.board.n
-        return ((block_i * m), ((block_i + 1) * m), (block_j * n), ((block_j + 1) * n))
+    """
+    Same structure as REWARDS, but indices represent whether or not
+    the given region has odd number of elements missing
+    """
+    PARITY = [
+        [
+            [3, 1],
+            [1, -1],
+        ],[
+            [1, -1],
+            [-1, -3],
+        ]
+    ]
 
 
-    def _update_empty(self, i: int, j: int, block_i: int, block_j: int) -> None:
-        """
-        Update the number of empty cells in the row, column and block of cell (i,j). 
-
-        @param i: row index
-        @param j: column index
-        @param block_i: block row index
-        @param block_j: block column index
-        """
-
-        self.row_empty[i] -= 1
-        self.column_empty[j] -= 1
-        self.block_empty[block_i, block_j] -= 1
-        self.num_empty -= 1
-
-
-    def _update_available(self, i: int, j: int, block_i: int, block_j: int) -> None:
-        """
-        Update the available moves, after applying Move(i,j,value).
-
-        @param i: row index
-        @param j: column index
-        @param block_i: block row index
-        @param block_j: block column index
-        """
-
-        value = self.board[i, j]
-        top, bottom, left, right = self._get_block_boundaries(i, j, block_i, block_j)
-        # No move is available in cell (i,j) anymore
-        self.available[i, j, :] = False
-        # value cannot be put into row i anymore
-        self.available[i, :, value - 1] = False
-        # value cannot be put into column j anymore
-        self.available[:, j, value - 1] = False
-        # value cannot be put into the block of (i,j) anymore
-        self.available[top:bottom, left:right, value - 1] = False
-
-
-    def __init__(self, gs: GameState, h_scores: [int], board: np.array,
-                 available: np.array, taboo_moves: [TabooMove], num_empty: int,
-                 row_empty: np.array, column_empty: np.array, block_empty: np.array):
+    def __init__(self, gs: GameState, blocks: BlockLookupTable, h_scores: [int], board: np.array,
+                 available: np.array, taboo_moves: [TabooMove], num_empty: int):
         """
         Initialize the game tree. 
 
@@ -146,67 +122,47 @@ class GameTree:
         """                 
 
         self.gs = gs
+        self.blocks = blocks
         self.h_scores = h_scores
         self.board = board
         self.available = available
         self.taboo_moves = taboo_moves
         self.num_empty = num_empty
-        self.row_empty = row_empty
-        self.column_empty = column_empty
-        self.block_empty = block_empty
 
 
-    def copy(self) -> GameTree:
+    def _copy(self) -> GameTree:
         """
         Copy the game tree. Every element is copied, except for the game state.
 
         @return: copy of self
         """
         
-        return GameTree(self.gs, self.h_scores.copy(), self.board.copy(),
-                        self.available.copy(), self.taboo_moves.copy(), self.num_empty,
-                        self.column_empty.copy(), self.row_empty.copy(), self.block_empty.copy())
+        return GameTree(self.gs, self.blocks, self.h_scores.copy(), self.board.copy(),
+                        self.available.copy(), self.taboo_moves.copy(), self.num_empty)
 
 
-    def from_game_state(game_state: GameState) -> GameTree:
+    def _update_available(self, i: int, j: int) -> None:
         """
-        Initialize the game tree from the given game state. 
-
-        @param game_state: the GameState object
-        @return: the GameTree object
-        """
-
-        N = game_state.board.N
-        board = np.full((N, N), SudokuBoard.empty, dtype=int)
-        available = np.full((N, N, N), True, dtype=bool)
-        row_empty = np.zeros(N)
-        column_empty = np.zeros(N)
-        block_empty = np.zeros((game_state.board.m, game_state.board.n))
-
-        gt = GameTree(game_state, [0, 0], board, available, game_state.taboo_moves, 
-                      0, row_empty, column_empty, block_empty)
-
-        for i in range(N):
-            for j in range(N):
-                gt.board[i, j] = game_state.board.get(i, j)
-                if gt.board[i, j] != SudokuBoard.empty:
-                    block_i, block_j = gt._get_block_indices(i, j)
-                    gt._update_available(i, j, block_i, block_j)
-                    gt._update_empty(i, j, block_i, block_j)
-
-        return gt
-
-
-    def _get_block(self, i: int, j: int) -> np.array:
-        """
-        Get the elements in the block where the cell (i,j) is located.
+        Update the available moves, after applying Move(i,j,value).
 
         @param i: row index
-        @param j: column index 
+        @param j: column index
         """
 
-        top, bottom, left, right = self._get_block_boundaries(i, j)
-        return self.board[top:bottom, left:right]
+        value = self.board[i, j]
+        if value == SudokuBoard.empty:
+            return
+
+        top, bottom, left, right = self.blocks.boundaries[i, j]
+        # No move is available in cell (i,j) anymore
+        self.available[i, j, :] = False
+        # value cannot be put into row i anymore
+        self.available[i, :, value - 1] = False
+        # value cannot be put into column j anymore
+        self.available[:, j, value - 1] = False
+        # value cannot be put into the block of (i,j) anymore
+        self.available[top:bottom, left:right, value - 1] = False
+
 
 
     def _update_score(self, reward: float, maximizer: bool) -> None:    
@@ -233,6 +189,15 @@ class GameTree:
         return np.any((np.sum(self.available, axis=2) + (self.board != SudokuBoard.empty)) == 0)
 
 
+    def _get_missing_counts(self, i: int, j: int) -> (int, int, int):
+        # Count the number of empty cells in the row, column and block
+        row_cnt = np.sum(self.board[i, :] == SudokuBoard.empty)
+        col_cnt = np.sum(self.board[:, j] == SudokuBoard.empty)
+        top, bottom, left, right = self.blocks.boundaries[i, j]
+        box_cnt = np.sum(self.board[top:bottom, left:right] == SudokuBoard.empty)
+        return row_cnt, col_cnt, box_cnt
+
+
     def _apply_move(self, move: Move, maximizer: bool, last_move: bool) -> GameTree:
         """
         Put `move.value` into cell `(move.i, move.j)`. Check if the row, column and block are filled in,
@@ -244,37 +209,35 @@ class GameTree:
         @return: reward
         """
 
-        gt = self.copy()
+        gt = self._copy()
 
-        N = gt.gs.board.N
         gt.board[move.i, move.j] = move.value
-
-        block_i, block_j = gt._get_block_indices(move.i, move.j)
-        gt._update_available(move.i, move.j, block_i, block_j)
+        gt._update_available(move.i, move.j)
 
         if gt._is_taboo_state():
-            gt = self.copy()
+            gt = self._copy()
             gt.taboo_moves.append(TabooMove(move.i, move.j, move.value))
             return gt
 
-        gt._update_empty(move.i, move.j, block_i, block_j)
-        reward = GameTree.REWARDS[self.row_empty[move.i] == 0][
-                              self.column_empty[move.j] == 0][
-                              self.block_empty[block_i, block_j] == 0] - \
-                 last_move * GameTree.PENALTY[self.row_empty[move.i] == 1][
-                              self.column_empty[move.j] == 1][
-                              self.block_empty[block_i, block_j] == 1]
+        gt.num_empty -= 1
 
+        row_cnt, col_cnt, box_cnt = gt._get_missing_counts(move.i, move.j)
+        # Filling in a region gives reward, but leaving it with just 1 unfilled cell gives penalty,
+        # since the other player will (most likely) fill it in on the next move.
+        reward = GameTree.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0] - \
+                 last_move * GameTree.PENALTY[row_cnt == 1][col_cnt == 1][box_cnt == 1] + \
+                 GameTree.PARITY[row_cnt % 2][col_cnt % 2][box_cnt % 2]
         gt._update_score(reward, maximizer)        
 
         return gt
 
 
-    def _finish_term(self) -> float:
-        return 10 * (1 - (self.num_empty / (self.gs.board.N**2))) * (-1 if self.num_empty % 2 == 1 else 1)
+    def _finish_term(self, maximizer) -> float:
+        return 10 * (1 - (self.num_empty / (self.gs.board.N**2))) * \
+            (1 if self.num_empty % 2 == maximizer else -1)
 
     
-    def _evaluate(self) -> float:
+    def _evaluate(self, maximizer) -> float:
         """"
         Evaluate the current game state.
 
@@ -282,7 +245,49 @@ class GameTree:
         """
 
         current_player = self.gs.current_player() - 1
-        return self.h_scores[current_player] - self.h_scores[1 - current_player] + self._finish_term()
+        return self.h_scores[current_player] - self.h_scores[1 - current_player] + \
+               self._finish_term(maximizer)
+
+
+    def _get_possible_moves(self, sort=True) -> [Move]:
+        """
+        Get all possible moves for the current game state. 
+        """
+
+        available_inds = np.argwhere(self.available) + [0, 0, 1]
+        available_inds = np.random.permutation(available_inds)
+
+        # Count the number of times each value occurs in self.board
+        if sort:
+            value_counts = np.bincount(self.board.flatten(), minlength=self.gs.board.N+1)
+            available_inds = sorted(available_inds, key=lambda x: value_counts[x[2]])
+
+        return [Move(*inds) for inds in available_inds if TabooMove(*inds) not in self.taboo_moves]
+
+
+    def from_game_state(game_state: GameState) -> GameTree:
+        """
+        Initialize the game tree from the given game state. 
+
+        @param game_state: the GameState object
+        @return: the GameTree object
+        """
+
+        N = game_state.board.N
+        blocks = BlockLookupTable(game_state.board.m, game_state.board.n)
+        board = np.full((N, N), SudokuBoard.empty, dtype=int)
+        available = np.full((N, N, N), True, dtype=bool)
+
+        gt = GameTree(game_state, blocks, [0, 0], board, available, game_state.taboo_moves, 0)
+
+        for i in range(N):
+            for j in range(N):
+                gt.board[i, j] = game_state.board.get(i, j)
+                gt._update_available(i, j)
+
+        gt.num_empty = np.sum(gt.board == SudokuBoard.empty)
+
+        return gt
 
 
     def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move, int):
@@ -296,11 +301,11 @@ class GameTree:
         @return: (score, move) tuple
         """
         if depth == 0:
-            return (self._evaluate(), None, 0)
+            return (self._evaluate(maximizer), None, 0)
 
-        all_moves = self.get_possible_moves()
+        all_moves = self._get_possible_moves()
         if len(all_moves) == 0:
-            return (self._evaluate(), None, 0)
+            return (self._evaluate(maximizer), None, 0)
 
         best_score = float('-inf') if maximizer else float('inf')
         best_move = None
@@ -337,22 +342,6 @@ class GameTree:
 
         return best_score, best_move, pruned
 
-
-    def get_possible_moves(self, sort=True) -> [Move]:
-        """
-        Get all possible moves for the current game state. 
-        """
-
-        available_inds = np.argwhere(self.available) + [0, 0, 1]
-        available_inds = np.random.permutation(available_inds)
-
-        # Count the number of times each value occurs in self.board
-        if sort:
-            value_counts = np.bincount(self.board.flatten(), minlength=self.gs.board.N+1)
-            available_inds = sorted(available_inds, key=lambda x: value_counts[x[2]])
-
-        return [Move(*inds) for inds in available_inds if TabooMove(*inds) not in self.taboo_moves]
-
     
     def get_first_possible_move(self) -> Move:
         """
@@ -375,12 +364,15 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     # N.B. This is a very naive implementation.
     def compute_best_move(self, game_state: GameState) -> None:
         tree = GameTree.from_game_state(game_state)
-        for depth in range(game_state.board.N**2):
+        depth = 0
+        while True:
             _, move, _ = tree.minimax(depth, True, float('-inf'), float('inf'))
 
             if move is None:
                 move = tree.get_first_possible_move()
             
             self.propose_move(move)
-            print(f'E : Depth: {depth}, Move: {move}')
+            # print(f'D : Depth: {depth}, Move: {move}')
+            depth += 1
+            
 

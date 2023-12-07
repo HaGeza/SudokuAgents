@@ -352,7 +352,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 move = tree.get_first_possible_move()
             
             self.propose_move(move)
-            print(f'D : Depth: {depth}, Move: {move}')
+            # print(f'D : Depth: {depth}, Move: {move}')
             depth += 1
             
 
