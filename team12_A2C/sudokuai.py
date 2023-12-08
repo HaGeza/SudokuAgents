@@ -120,7 +120,7 @@ class GameTree:
         self.taboo_moves = taboo_moves
 
 
-    def copy(self) -> GameTree:
+    def _copy(self) -> GameTree:
         """
         Copy the game tree. Every element is copied, except for the game state.
 
@@ -129,28 +129,6 @@ class GameTree:
         
         return GameTree(self.gs, self.h_scores.copy(), self.board.copy(),
                         self.available.copy(), self.taboo_moves.copy())
-
-
-    def from_game_state(game_state: GameState) -> GameTree:
-        """
-        Initialize the game tree from the given game state. 
-
-        @param game_state: the GameState object
-        @return: the GameTree object
-        """
-
-        N = game_state.board.N
-        board = np.full((N, N), SudokuBoard.empty, dtype=int)
-        available = np.full((N, N, N), True, dtype=bool)
-
-        gt = GameTree(game_state, [0, 0], board, available, game_state.taboo_moves)
-
-        for i in range(N):
-            for j in range(N):
-                gt.board[i, j] = game_state.board.get(i, j)
-                gt._update_available(i, j)
-
-        return gt
 
 
     def _get_block(self, i: int, j: int) -> np.array:
@@ -200,13 +178,13 @@ class GameTree:
         @return: reward
         """
 
-        gt = self.copy()
+        gt = self._copy()
 
         gt.board[move.i, move.j] = move.value
         gt._update_available(move.i, move.j)
 
         if gt._is_taboo_state():
-            gt = self.copy()
+            gt = self._copy()
             gt.taboo_moves.append(TabooMove(move.i, move.j, move.value))
             return gt
 
@@ -235,6 +213,37 @@ class GameTree:
         return self.h_scores[current_player] - self.h_scores[1 - current_player]
 
 
+    def _get_possible_moves(self, sort=False) -> [Move]:
+        """
+        Get all possible moves for the current game state. 
+        """
+
+        available_inds = np.argwhere(self.available) + [0, 0, 1]
+        return [Move(*inds) for inds in available_inds if TabooMove(*inds) not in self.taboo_moves]
+
+
+    def from_game_state(game_state: GameState) -> GameTree:
+        """
+        Initialize the game tree from the given game state. 
+
+        @param game_state: the GameState object
+        @return: the GameTree object
+        """
+
+        N = game_state.board.N
+        board = np.full((N, N), SudokuBoard.empty, dtype=int)
+        available = np.full((N, N, N), True, dtype=bool)
+
+        gt = GameTree(game_state, [0, 0], board, available, game_state.taboo_moves)
+
+        for i in range(N):
+            for j in range(N):
+                gt.board[i, j] = game_state.board.get(i, j)
+                gt._update_available(i, j)
+
+        return gt
+
+
     def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move, int):
         """
         Minimax algorithm with alpha-beta pruning. 
@@ -248,7 +257,7 @@ class GameTree:
         if depth == 0:
             return (self._evaluate(), None, 0)
 
-        all_moves = self.get_possible_moves()
+        all_moves = self._get_possible_moves()
         random.shuffle(all_moves)
         if len(all_moves) == 0:
             return (self._evaluate(), None, 0)
@@ -287,15 +296,6 @@ class GameTree:
                     break
 
         return best_score, best_move, pruned
-
-
-    def get_possible_moves(self, sort=False) -> [Move]:
-        """
-        Get all possible moves for the current game state. 
-        """
-
-        available_inds = np.argwhere(self.available) + [0, 0, 1]
-        return [Move(*inds) for inds in available_inds if TabooMove(*inds) not in self.taboo_moves]
 
 
     def get_first_possible_move(self) -> Move:
