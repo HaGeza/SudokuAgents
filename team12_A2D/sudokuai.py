@@ -192,7 +192,6 @@ class GameTree:
 
         gt = self._copy()
 
-        N = gt.gs.board.N
         gt.board[move.i, move.j] = move.value
         gt._update_available(move.i, move.j)
 

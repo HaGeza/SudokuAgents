@@ -11,8 +11,6 @@ from copy import deepcopy
 # Basic numpy operations implemented
 # Availability tensor implemented
 # Taboo state detection implemented
-# Sorting legal moves implemented
-# Basic heuristic for flipping with taboo
 
 class GameTree: pass
 
@@ -104,7 +102,7 @@ class GameTree:
 
 
     def __init__(self, gs: GameState, h_scores: [int], board: np.array,
-                 available: np.array, taboo_moves: [TabooMove], num_empty: int):
+                 available: np.array, taboo_moves: [TabooMove]):
         """
         Initialize the game tree. 
 
@@ -113,7 +111,6 @@ class GameTree:
         @param board: the current board as an np.array
         @param available: the available values for each cell as an np.array
         @param taboo_moves: list of taboo moves
-        @param num_empty: number of empty cells
         """                 
 
         self.gs = gs
@@ -121,7 +118,6 @@ class GameTree:
         self.board = board
         self.available = available
         self.taboo_moves = taboo_moves
-        self.num_empty = num_empty
 
 
     def copy(self) -> GameTree:
@@ -132,7 +128,7 @@ class GameTree:
         """
         
         return GameTree(self.gs, self.h_scores.copy(), self.board.copy(),
-                        self.available.copy(), self.taboo_moves.copy(), self.num_empty)
+                        self.available.copy(), self.taboo_moves.copy())
 
 
     def from_game_state(game_state: GameState) -> GameTree:
@@ -147,14 +143,12 @@ class GameTree:
         board = np.full((N, N), SudokuBoard.empty, dtype=int)
         available = np.full((N, N, N), True, dtype=bool)
 
-        gt = GameTree(game_state, [0, 0], board, available, game_state.taboo_moves, 0)
+        gt = GameTree(game_state, [0, 0], board, available, game_state.taboo_moves)
 
         for i in range(N):
             for j in range(N):
                 gt.board[i, j] = game_state.board.get(i, j)
                 gt._update_available(i, j)
-
-        gt.num_empty = np.sum(gt.board == SudokuBoard.empty)
 
         return gt
 
@@ -195,14 +189,6 @@ class GameTree:
         return np.any((np.sum(self.available, axis=2) + (self.board != SudokuBoard.empty)) == 0)
 
 
-    def _get_missing_counts(self, i: int, j: int) -> (int, int, int):
-        # Count the number of empty cells in the row, column and block
-        row_cnt = np.sum(self.board[i, :] == SudokuBoard.empty)
-        col_cnt = np.sum(self.board[:, j] == SudokuBoard.empty)
-        box_cnt = np.sum(self._get_block(i, j) == SudokuBoard.empty)
-        return row_cnt, col_cnt, box_cnt
-
-
     def _apply_move(self, move: Move, maximizer: bool, last_move: bool) -> GameTree:
         """
         Put `move.value` into cell `(move.i, move.j)`. Check if the row, column and block are filled in,
@@ -216,7 +202,6 @@ class GameTree:
 
         gt = self.copy()
 
-        N = gt.gs.board.N
         gt.board[move.i, move.j] = move.value
         gt._update_available(move.i, move.j)
 
@@ -225,9 +210,11 @@ class GameTree:
             gt.taboo_moves.append(TabooMove(move.i, move.j, move.value))
             return gt
 
-        gt.num_empty -= 1
+        # Count the number of empty cells in the row, column and block
+        row_cnt = np.sum(gt.board[move.i, :] == SudokuBoard.empty)
+        col_cnt = np.sum(gt.board[:, move.j] == SudokuBoard.empty)
+        box_cnt = np.sum(gt._get_block(move.i, move.j) == SudokuBoard.empty)
 
-        row_cnt, col_cnt, box_cnt = gt._get_missing_counts(move.i, move.j)
         # Filling in a region gives reward, but leaving it with just 1 unfilled cell gives penalty,
         # since the other player will (most likely) fill it in on the next move.
         reward = self.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0] - \
@@ -235,10 +222,6 @@ class GameTree:
         gt._update_score(reward, maximizer)        
 
         return gt
-
-
-    def _finish_term(self) -> float:
-        return 10 * (1 - (self.num_empty / (self.gs.board.N**2))) * (-1 if self.num_empty % 2 == 1 else 1)
 
     
     def _evaluate(self) -> float:
@@ -249,8 +232,7 @@ class GameTree:
         """
 
         current_player = self.gs.current_player() - 1
-        # print(self._finish_term())
-        return self.h_scores[current_player] - self.h_scores[1 - current_player] + self._finish_term()
+        return self.h_scores[current_player] - self.h_scores[1 - current_player]
 
 
     def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move, int):
@@ -267,6 +249,7 @@ class GameTree:
             return (self._evaluate(), None, 0)
 
         all_moves = self.get_possible_moves()
+        random.shuffle(all_moves)
         if len(all_moves) == 0:
             return (self._evaluate(), None, 0)
 
@@ -306,22 +289,15 @@ class GameTree:
         return best_score, best_move, pruned
 
 
-    def get_possible_moves(self, sort=True) -> [Move]:
+    def get_possible_moves(self, sort=False) -> [Move]:
         """
         Get all possible moves for the current game state. 
         """
 
         available_inds = np.argwhere(self.available) + [0, 0, 1]
-        available_inds = np.random.permutation(available_inds)
-
-        # Count the number of times each value occurs in self.board
-        if sort:
-            value_counts = np.bincount(self.board.flatten(), minlength=self.gs.board.N+1)
-            available_inds = sorted(available_inds, key=lambda x: value_counts[x[2]])
-
         return [Move(*inds) for inds in available_inds if TabooMove(*inds) not in self.taboo_moves]
 
-    
+
     def get_first_possible_move(self) -> Move:
         """
         Get the first possible move for the current game state. 
@@ -344,11 +320,11 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     def compute_best_move(self, game_state: GameState) -> None:
         tree = GameTree.from_game_state(game_state)
         for depth in range(game_state.board.N**2):
-            _, move, _ = tree.minimax(depth, True, float('-inf'), float('inf'))
+            _, move, pruned = tree.minimax(depth, True, float('-inf'), float('inf'))
 
             if move is None:
                 move = tree.get_first_possible_move()
             
             self.propose_move(move)
-            print(f'D : Depth: {depth}, Move: {move}')
+            print(f'A2C:: Depth: {depth}, Move: {move}, Pruned: {pruned}')
 
