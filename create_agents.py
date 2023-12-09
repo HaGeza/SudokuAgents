@@ -47,7 +47,10 @@ test_commands = []
 for options in options_list:
     option_names = list(options_variants.keys())
     filter = options[0]
-    dir_name = f'team12_A2_{test_group}_{filter["available_le"]}_{filter["min_keep"]}'
+
+    min_keep = str(filter['min_keep']).replace('.', '')
+
+    dir_name = f'team12_A2_{test_group}_{filter["available_le"]}_{min_keep}'
 
     if os.path.exists(dir_name):
         shutil.rmtree(dir_name)        
