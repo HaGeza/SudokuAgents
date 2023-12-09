@@ -206,7 +206,7 @@ class GameTree:
 
         gt.empty_left -= 1
         # Don't count rewards for last move, to not encourage the switching game
-        if gt.empty_left > 0:
+        if gt.options['account_for_finish'] or gt.empty_left > 0:
             # Count the number of empty cells in the row, column and block
             row_cnt = np.sum(gt.board[move.i, :] == SudokuBoard.empty)
             col_cnt = np.sum(gt.board[:, move.j] == SudokuBoard.empty)
