@@ -14,15 +14,15 @@ class GameTree:
 
     DEFAULT_OPTIONS = {
         # Options related to taboo state detection
-        'detect_taboo': True,
-        'account_for_finish': True,
+        'detect_taboo': False,
+        'account_for_finish': False,
         # Options related to available move calculation
         'value_filter': {
             'available_le': 3,
             'min_keep': 1.0,
         },
-        'sort': True,
-        'shuffle': True,
+        'sort': False,
+        'shuffle': False,
         # Options related to logging. NOTE:
         # - verbose logging slows down the algorithm
         # - verbose logging does not work properly when the output

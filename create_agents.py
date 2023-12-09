@@ -24,24 +24,24 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
 value_filters = []    
 for available_le in [1, 2, 3, 5]:
-    for min_keep in [0.1, 0.25, 0.5, 1.0]:
+    for min_keep in [0.1, 0.2, 0.3, 0.5]:
         value_filters.append({
             'available_le': available_le,
             'min_keep': min_keep,
         })
 
 options_variants = {
-    # 'detect_taboo': [True, False],
-    # 'account_for_finish': [True, False],
-    'sort': [True, False],
-    'shuffle': [True, False],
+    'detect_taboo': [True, False],
+    'account_for_finish': [True, False],
+    # 'sort': [True, False],
+    # 'shuffle': [True, False],
     # 'value_filter': value_filters,
 }
 
 options_list = list(itertools.product(*options_variants.values()))
 
 opposing_agents = ['greedy_player', 'team12_A1']
-test_group = 'sort_shuffle'
+test_group = 'taboo'
 test_commands = []
 
 for options in options_list:
