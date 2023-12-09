@@ -64,11 +64,13 @@ for options in options_list:
 
 time = 0.3
 board = 'empty-2x3.txt'
-out_log = 'taboo_log.txt'
+out_log = 'taboo_log'
+chunks = 2
 
-test_commands = [f'{cmd} --time {time} --board boards/{board} >> logs/{out_log}' for cmd in test_commands]
+for i in range(chunks):
+    num_cmds = len(test_commands) // chunks
+    commands = [f'{cmd} --time {time} --board boards/{board} >> logs/{out_log}_{i+1}.txt' for cmd in test_commands[i*num_cmds:(i+1)*num_cmds]]
 
-with open(f'test_{test_group}.sh', 'w') as f: 
-    f.write('#!/bin/bash\n')
-    f.write(f'echo "--time {time} --board {board}" > logs/{out_log}\n')
-    f.write('\n'.join(test_commands))
+    with open(f'test_{test_group}_{i+1}.sh', 'w') as f: 
+        f.write('#!/bin/bash\n')
+        f.write('\n'.join(commands))
