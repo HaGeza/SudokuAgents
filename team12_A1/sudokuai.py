@@ -244,7 +244,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 self.propose_move(random.choice(tree.get_possible_moves()))
             else:
                 self.propose_move(move)
-            print(f'A1 DEPTH: {depth}')
+            # print(f'A1 DEPTH: {depth}')
             depth += 1
             
 
