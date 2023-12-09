@@ -14,8 +14,8 @@ class GameTree:
 
     DEFAULT_OPTIONS = {
         # Options related to taboo state detection
-        'detect_taboo': False,
-        'account_for_finish': False,
+        'detect_taboo': True,
+        'account_for_finish': True,
         # Options related to available move calculation
         'value_filter': {
             'available_le': 3,
