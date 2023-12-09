@@ -31,23 +31,23 @@ for available_le in [1, 2, 3, 5]:
         })
 
 options_variants = {
-    'detect_taboo': [True, False],
-    'account_for_finish': [True, False],
-    # 'sort': [True, False],
-    # 'shuffle': [True, False],
+    # 'detect_taboo': [True, False],
+    # 'account_for_finish': [True, False],
+    'sort': [True, False],
+    'shuffle': [True, False],
     # 'value_filter': value_filters,
 }
 
 options_list = list(itertools.product(*options_variants.values()))
 
 opposing_agents = ['greedy_player', 'team12_A1']
-test_group = 'taboo'
+test_group = 'sort_shuffle'
 test_commands = []
 
 for options in options_list:
     option_names = list(options_variants.keys())
-    detect_taboo, account_for_finish = options
-    dir_name = f'team12_A2_{test_group}_{int(detect_taboo)}{int(account_for_finish)}'
+    sort, shuffle = options
+    dir_name = f'team12_A2_{test_group}_{int(sort)}{int(shuffle)}'
 
     if os.path.exists(dir_name):
         shutil.rmtree(dir_name)        
