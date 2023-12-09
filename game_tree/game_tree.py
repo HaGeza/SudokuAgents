@@ -21,8 +21,8 @@ class GameTree:
             'available_le': 3,
             'min_keep': 1.0,
         },
-        'sort': False,
-        'shuffle': False,
+        'sort': True,
+        'shuffle': True,
         # Options related to logging. NOTE:
         # - verbose logging slows down the algorithm
         # - verbose logging does not work properly when the output
