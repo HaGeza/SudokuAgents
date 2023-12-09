@@ -54,8 +54,8 @@ def simulate_game(initial_board: SudokuBoard,
     @return The result of the game.
     """
 
-    def log(text):
-        if verbose:
+    def log(text, force=False):
+        if force or verbose:
             print(text)
 
     game_state = GameState(initial_board, copy.deepcopy(initial_board), [], [], [0, 0])
@@ -74,12 +74,17 @@ def simulate_game(initial_board: SudokuBoard,
         player1.best_move = manager.list([0, 0, 0])
         player2.best_move = manager.list([0, 0, 0])
 
+        # use shared variables to store number of proposals
+        player1.num_prop = manager.Value('i', 0)
+        player2.num_prop = manager.Value('i', 0)
+
         while move_number < number_of_moves:
             player, player_number = (player1, 1) if len(game_state.moves) % 2 == 0 else (player2, 2)
             log(f'-----------------------------\nCalculate a move for player {player_number}')
             player.best_move[0] = 0
             player.best_move[1] = 0
             player.best_move[2] = 0
+            player.num_prop.value = 0
             try:
                 process = multiprocessing.Process(target=player.compute_best_move, args=(game_state,))
                 process.start()
@@ -92,6 +97,7 @@ def simulate_game(initial_board: SudokuBoard,
             i, j, value = player.best_move
             best_move = Move(i, j, value)
             log(f'Best move: {best_move}')
+            log(f'Number of proposals: {player.num_prop.value}', force=True)
             player_score = 0
             if best_move != Move(0, 0, 0):
                 if TabooMove(i, j, value) in game_state.taboo_moves:

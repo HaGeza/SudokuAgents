@@ -43,6 +43,7 @@ class SudokuAI(object):
         self.best_move[0] = i
         self.best_move[1] = j
         self.best_move[2] = value
+        self.num_prop.value += 1
         if self.lock:
             self.lock.release()
 
