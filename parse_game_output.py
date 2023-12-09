@@ -35,6 +35,9 @@ with open(sys.argv[1], 'r') as f:
 
                 data.append(dict(zip(fields, [*players, winner, *scores, board, time])))
 
+                scores = None
+                winner = None
+
 
 # import json
 # print(json.dumps(data, indent=2))

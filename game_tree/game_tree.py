@@ -363,6 +363,9 @@ def play_minimax_game(game_state: GameState, propose_move, options: dict = {}) -
         tree.finished[0] = True            
         score, move, _ = tree.minimax(depth, True, float('-inf'), float('inf'))
         
+        if move is None:
+            move = tree.get_first_possible_move()           
+        
         propose_move(move)
         if options['verbose']:
             print(f'{options["name"]} :: Depth: {depth}, Move: {move}, Score: {score}')
