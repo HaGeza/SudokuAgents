@@ -48,7 +48,16 @@ play_counts = df['player1'].value_counts()
 print(play_counts)
 win_counts = df['winner'].value_counts()
 print(win_counts)
-
+for player in ['team12_A2_filter_2_03', 'team12_A2_filter_5_02']:
+    p1_rows = df[df['player1'] == player]
+    p1_score = p1_rows['score1'].sum()
+    p1_total = p1_score + p1_rows['score2'].sum()
+    print(f'{player}: {p1_score} / {p1_total}, ({p1_score / p1_total})')
+    p2_rows = df[df['player2'] == player]
+    p2_score = p2_rows['score2'].sum()
+    p2_total = p2_score + p2_rows['score1'].sum()
+    print(f'{player}: {p2_score} / {p2_total}, ({p2_score / p2_total})')
+    
 df.to_csv(sys.argv[2], index=False)
 
 
