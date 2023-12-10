@@ -213,9 +213,10 @@ class GameTree:
         """
 
         current_player = self.gs.current_player() - 1
-        return self.h_scores[current_player] - self.h_scores[1 - current_player] - \
-               (sum(self.h_scores) / (7 * self.board.shape[0]))
-
+        # Punish moves that increase the score, but not the score difference, e.g. 1-1 trades
+        regularization = max(0.0, (sum(self.h_scores) / (7 * self.board.shape[0])))
+        return self.h_scores[current_player] - self.h_scores[1 - current_player] - regularization
+               
 
     def _get_possible_moves(self) -> [Move]:
         """
