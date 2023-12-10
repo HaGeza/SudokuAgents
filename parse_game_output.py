@@ -58,6 +58,6 @@ for player in ['team12_A2_filter_2_03', 'team12_A2_filter_5_02']:
     p2_total = p2_score + p2_rows['score1'].sum()
     print(f'{player}: {p2_score} / {p2_total}, ({p2_score / p2_total})')
     
-df.to_csv(sys.argv[2], index=False)
+# df.to_csv(sys.argv[2], index=False)
 
 
