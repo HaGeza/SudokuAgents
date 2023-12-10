@@ -213,10 +213,15 @@ class GameTree:
         """
 
         current_player = self.gs.current_player() - 1
-        # Punish moves that increase the score, but not the score difference, e.g. 1-1 trades
-        regularization = max(0.0, (sum(self.h_scores) / (7 * self.board.shape[0])))
-        return self.h_scores[current_player] - self.h_scores[1 - current_player] - regularization
-               
+        reg_term = max(0.0, sum(self.h_scores) / (7 * self.board.shape[0]))
+        return self.h_scores[current_player] - self.h_scores[1 - current_player] - reg_term
+
+
+    VALUE_FILTER = {
+        'available_le': 2,
+        'min_keep': 0.3,
+    }
+    
 
     def _get_possible_moves(self) -> [Move]:
         """
@@ -236,8 +241,8 @@ class GameTree:
         ordering = np.argsort(values_available)
         available_inds = available_inds[ordering]
         # Determine the number of indices to keep
-        length_to_keep = max(np.count_nonzero(values_available <= 5),
-                             int(0.2 * available_inds.shape[0]))
+        length_to_keep = max(np.count_nonzero(values_available <= self.VALUE_FILTER['available_le']),
+                             int(self.VALUE_FILTER['min_keep'] * available_inds.shape[0]))
         # Keep only a portion of available indices
         available_inds = available_inds[:length_to_keep]
 

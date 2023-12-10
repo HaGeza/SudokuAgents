@@ -216,6 +216,12 @@ class GameTree:
         return self.h_scores[current_player] - self.h_scores[1 - current_player]
 
 
+    VALUE_FILTER = {
+        'available_le': 2,
+        'min_keep': 0.3,
+    }
+    
+
     def _get_possible_moves(self) -> [Move]:
         """
         Get all possible moves for the current game state. 
@@ -234,8 +240,8 @@ class GameTree:
         ordering = np.argsort(values_available)
         available_inds = available_inds[ordering]
         # Determine the number of indices to keep
-        length_to_keep = max(np.count_nonzero(values_available <= 5),
-                             int(0.2 * available_inds.shape[0]))
+        length_to_keep = max(np.count_nonzero(values_available <= self.VALUE_FILTER['available_le']),
+                             int(self.VALUE_FILTER['min_keep'] * available_inds.shape[0]))
         # Keep only a portion of available indices
         available_inds = available_inds[:length_to_keep]
 

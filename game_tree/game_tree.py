@@ -18,8 +18,8 @@ class GameTree:
         'account_for_finish': True,
         # Options related to available move calculation
         'value_filter': {
-            'available_le': 5,
-            'min_keep': 0.2,
+            'available_le': 2,
+            'min_keep': 0.3,
         },
         'sort': True,
         'shuffle': True,
