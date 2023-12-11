@@ -1,4 +1,4 @@
-python play_match.py --first team12_A2 --second team12_A1 --time 0.5 --board boards/random-3x3.txt 
+python play_match.py --first team12_A2 --second team12_A1 --time 0.5 --board boards/random-3x3.txt
 Playing game 1
 Number of proposals: 4
 Number of proposals: 2
@@ -1970,50 +1970,6 @@ Player 2 wins the game.
 team12_A1 - team12_A2 0-1
 
 Match result: team12_A2 - team12_A1 5-1
-python play_match.py --first team12_A2 --second team12_A1 --time 0.1 --board boards/random-3x3.txt
-Playing game 1
-Number of proposals: 1
-Number of proposals: 0
-No move was supplied. Player 1 wins the game.
-team12_A2 - team12_A1 1-0
-
-Playing game 2
-Number of proposals: 2
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 0
-No move was supplied. Player 1 wins the game.
-team12_A1 - team12_A2 1-0
-
-Playing game 3
-Number of proposals: 0
-No move was supplied. Player 2 wins the game.
-team12_A2 - team12_A1 0-1
-
-Playing game 4
-Number of proposals: 2
-Number of proposals: 1
-Number of proposals: 0
-No move was supplied. Player 2 wins the game.
-team12_A1 - team12_A2 0-1
-
-Playing game 5
-Number of proposals: 1
-Number of proposals: 0
-No move was supplied. Player 1 wins the game.
-team12_A2 - team12_A1 1-0
-
-Playing game 6
-Number of proposals: 2
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 0
-No move was supplied. Player 1 wins the game.
-team12_A1 - team12_A2 1-0
-
-Match result: team12_A2 - team12_A1 3-3
 python play_match.py --first team12_A2 --second greedy_player --time 0.5 --board boards/random-3x3.txt
 Playing game 1
 Number of proposals: 4
@@ -6286,54 +6242,6 @@ Number of proposals: 140
 Number of proposals: 3
 Score: 24 - 42
 Player 2 wins the game.
-team12_A1 - team12_A2 0-1
-
-Match result: team12_A2 - team12_A1 5-1
-python play_match.py --first team12_A2 --second team12_A1 --time 0.1 --board boards/random-3x3.txt
-Playing game 1
-Number of proposals: 1
-Number of proposals: 0
-No move was supplied. Player 1 wins the game.
-team12_A2 - team12_A1 1-0
-
-Playing game 2
-Number of proposals: 2
-Number of proposals: 1
-Number of proposals: 0
-No move was supplied. Player 2 wins the game.
-team12_A1 - team12_A2 0-1
-
-Playing game 3
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 1
-Number of proposals: 0
-No move was supplied. Player 1 wins the game.
-team12_A2 - team12_A1 1-0
-
-Playing game 4
-Number of proposals: 2
-Number of proposals: 1
-Number of proposals: 0
-No move was supplied. Player 2 wins the game.
-team12_A1 - team12_A2 0-1
-
-Playing game 5
-Number of proposals: 0
-No move was supplied. Player 2 wins the game.
-team12_A2 - team12_A1 0-1
-
-Playing game 6
-Number of proposals: 2
-Number of proposals: 1
-Number of proposals: 0
-No move was supplied. Player 2 wins the game.
 team12_A1 - team12_A2 0-1
 
 Match result: team12_A2 - team12_A1 5-1
