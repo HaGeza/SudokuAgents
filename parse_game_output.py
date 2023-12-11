@@ -21,11 +21,10 @@ with open(sys.argv[1], 'r') as f:
         if match is not None:
             scores = [int(match.group(1)), int(match.group(2))]
 
-        if scores is not None:
-            match = re.match(r'Player (1|2) wins the game.', line)
-            if match is not None:
-                winner = int(match.group(1))
-                continue
+        match = re.match(r'.*Player (1|2) wins the game.', line)
+        if match is not None:
+            winner = int(match.group(1))
+            continue
 
         if winner is not None:
             match = re.match(r'([^ ]+) - ([^ ]+).*', line)
@@ -35,7 +34,7 @@ with open(sys.argv[1], 'r') as f:
 
                 data.append(dict(zip(fields, [*players, winner, *scores, board, time])))
 
-                scores = None
+                scores = [0, 0]
                 winner = None
 
 
@@ -44,19 +43,19 @@ with open(sys.argv[1], 'r') as f:
 
 df = pd.DataFrame(data)
 
-play_counts = df['player1'].value_counts()
+play_counts = df['player1'].value_counts() + df['player2'].value_counts()
 print(play_counts)
 win_counts = df['winner'].value_counts()
 print(win_counts)
-for player in ['team12_A2_filter_2_03', 'team12_A2_filter_5_02']:
-    p1_rows = df[df['player1'] == player]
-    p1_score = p1_rows['score1'].sum()
-    p1_total = p1_score + p1_rows['score2'].sum()
-    print(f'{player}: {p1_score} / {p1_total}, ({p1_score / p1_total})')
-    p2_rows = df[df['player2'] == player]
-    p2_score = p2_rows['score2'].sum()
-    p2_total = p2_score + p2_rows['score1'].sum()
-    print(f'{player}: {p2_score} / {p2_total}, ({p2_score / p2_total})')
+# for player in ['team12_A2', 'team12_A1', 'gr']:
+#     p1_rows = df[df['player1'] == player]
+#     p1_score = p1_rows['score1'].sum()
+#     p1_total = p1_score + p1_rows['score2'].sum()
+#     print(f'{player}: {p1_score} / {p1_total}, ({p1_score / p1_total})')
+#     p2_rows = df[df['player2'] == player]
+#     p2_score = p2_rows['score2'].sum()
+#     p2_total = p2_score + p2_rows['score1'].sum()
+#     print(f'{player}: {p2_score} / {p2_total}, ({p2_score / p2_total})')
     
 # df.to_csv(sys.argv[2], index=False)
 
