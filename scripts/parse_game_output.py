@@ -77,7 +77,7 @@ with open(sys.argv[1], 'r') as f:
                     for j in range(len(depths[i])):
                         timestamp = 2*j + i
                         depth = min(depths[i][j] - (player != 'greedy_player'), game_length - timestamp)
-                        depth_data.append({'player': player, 'depth': depths[i][j], 'timestamp': timestamp})
+                        depth_data.append({'player': player, 'depth': depth, 'timestamp': timestamp})
 
                 depths, d_ind, scores, winner, _, _ = reset()
 
