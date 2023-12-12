@@ -18,7 +18,7 @@ df['is_winner'] = df['winner'] == df['our_player']
 pivot_table = pd.pivot_table(df, values='is_winner', index=['available_le'], columns=['min_keep'], aggfunc='mean')
 
 plt.figure(figsize=(10, 8))
-sns.heatmap(pivot_table, annot=True, fmt=".1%", cmap='YlOrRd')
+sns.heatmap(pivot_table, annot=True, fmt=".1%", cmap='crest')
 plt.title('Heatmap of Winning Percentage')
 # plt.show()
 
