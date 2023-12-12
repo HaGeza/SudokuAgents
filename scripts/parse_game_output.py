@@ -63,9 +63,12 @@ with open(sys.argv[1], 'r') as f:
 
                 data.append(dict(zip(fields, [*players, winner, *scores, board, time])))
 
+                game_length = len(depths[0]) + len(depths[1])
                 for i, player in enumerate(players):
                     for j in range(len(depths[i])):
-                        depth_data.append({'player': player, 'depth': depths[i][j], 'timestamp': 2*j + i})
+                        timestamp = 2*j + i
+                        depth = min(depths[i][j] - (player != 'greedy_player'), game_length - timestamp)
+                        depth_data.append({'player': player, 'depth': depths[i][j], 'timestamp': timestamp})
 
                 depths, d_ind, scores, winner, _, _ = reset()
 

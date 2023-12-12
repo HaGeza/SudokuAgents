@@ -465,3 +465,15 @@ team12_A2,team12_A1,team12_A2,45,22,"random-4x4.txt
 ",1.0
 team12_A1,team12_A2,team12_A2,24,42,"random-4x4.txt
 ",1.0
+team12_A2,greedy_player,team12_A2,37,11,"random-3x4.txt
+",5.0
+greedy_player,team12_A2,team12_A2,11,36,"random-3x4.txt
+",5.0
+team12_A2,greedy_player,team12_A2,37,11,"random-3x4.txt
+",5.0
+greedy_player,team12_A2,team12_A2,14,33,"random-3x4.txt
+",5.0
+team12_A2,greedy_player,team12_A2,36,11,"random-3x4.txt
+",5.0
+greedy_player,team12_A2,team12_A2,14,32,"random-3x4.txt
+",5.0

@@ -13,6 +13,8 @@ class GameTree:
     """
 
     DEFAULT_OPTIONS = {
+        # Only count penalty on last depth
+        'penalty_only_on_last': True,
         # Options related to taboo state detection
         'detect_taboo': True,
         'account_for_finish': True,
@@ -302,7 +304,6 @@ class GameTree:
             return (self._evaluate(), None, 0)
 
         all_moves = self._get_possible_moves()
-        # all_moves = self._get_possible_moves()
         if len(all_moves) == 0:
             return (self._evaluate(), None, 0)
 
@@ -310,9 +311,11 @@ class GameTree:
         best_move = None
         pruned = 0
 
+        last_depth = (not self.options['penalty_only_on_last']) or depth == 1
+
         if maximizer:
             for i, move in enumerate(all_moves):
-                score, _, sub_pruned = self._apply_move(move, True, depth == 1).minimax(
+                score, _, sub_pruned = self._apply_move(move, True, last_depth).minimax(
                                                         depth - 1, False, alpha, beta)
                 pruned += sub_pruned
 
@@ -326,7 +329,7 @@ class GameTree:
                     break
         else:
             for i, move in enumerate(all_moves):
-                score, _, sub_pruned = self._apply_move(move, False, depth == 1).minimax(
+                score, _, sub_pruned = self._apply_move(move, False, last_depth).minimax(
                                                         depth - 1, True, alpha, beta)
                 pruned += sub_pruned
 
