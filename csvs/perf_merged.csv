@@ -263,6 +263,8 @@ team12_A2,greedy_player,team12_A2,0,0,"random-3x4.txt
 ",0.5
 greedy_player,team12_A2,team12_A2,16,32,"random-3x4.txt
 ",0.5
+team12_A2,greedy_player,draw,23,23,"random-3x4.txt
+",1.0
 greedy_player,team12_A2,team12_A2,13,34,"random-3x4.txt
 ",1.0
 team12_A2,greedy_player,team12_A2,24,22,"random-3x4.txt

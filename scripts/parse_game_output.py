@@ -40,26 +40,35 @@ with open(sys.argv[1], 'r') as f:
         if match is not None:
             time = match.group(1)
             board = match.group(2).replace(BOARDS_DIR, '')
+            continue
 
         match = re.match(r'.*Number of proposals: (\d+).*', line)
         if match is not None:
             depths[d_ind].append(int(match.group(1)))
             d_ind = 1 - d_ind
+            continue
 
         match = re.match(r'.*Score: (\d+) - (\d+).*', line)
         if match is not None:
             scores = [int(match.group(1)), int(match.group(2))]
+            continue
 
         match = re.match(r'.*Player (1|2) wins the game\..*', line)
         if match is not None:
             winner = int(match.group(1))
             continue
 
+        match = re.match(r'.*The game ends in a draw\..*', line)
+        if match is not None:
+            winner = 'draw'
+            continue
+
         if winner is not None:
             match = re.match(r'([^ ]+) - ([^ ]+).*', line)
             if match is not None:
                 players = [match.group(1), match.group(2)]
-                winner = players[winner - 1]
+                if winner != 'draw':
+                    winner = players[winner - 1]
 
                 data.append(dict(zip(fields, [*players, winner, *scores, board, time])))
 

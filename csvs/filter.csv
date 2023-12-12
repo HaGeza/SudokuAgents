@@ -338,6 +338,7 @@ team12_A1,team12_A2_filter_3_05,team12_A2_filter_3_05,6,36,empty-2x3,0.3
 team12_A2_filter_5_01,greedy_player,team12_A2_filter_5_01,32,7,empty-2x3,0.3
 greedy_player,team12_A2_filter_5_01,team12_A2_filter_5_01,10,25,empty-2x3,0.3
 team12_A2_filter_5_01,greedy_player,team12_A2_filter_5_01,26,9,empty-2x3,0.3
+greedy_player,team12_A2_filter_5_01,draw,18,18,empty-2x3,0.3
 team12_A2_filter_5_01,greedy_player,team12_A2_filter_5_01,29,8,empty-2x3,0.3
 greedy_player,team12_A2_filter_5_01,team12_A2_filter_5_01,13,22,empty-2x3,0.3
 team12_A2_filter_5_01,team12_A1,team12_A2_filter_5_01,30,8,empty-2x3,0.3
@@ -361,6 +362,7 @@ team12_A1,team12_A2_filter_5_02,team12_A1,25,13,empty-2x3,0.3
 team12_A2_filter_5_03,greedy_player,team12_A2_filter_5_03,20,15,empty-2x3,0.3
 greedy_player,team12_A2_filter_5_03,team12_A2_filter_5_03,8,30,empty-2x3,0.3
 team12_A2_filter_5_03,greedy_player,team12_A2_filter_5_03,22,13,empty-2x3,0.3
+greedy_player,team12_A2_filter_5_03,draw,18,18,empty-2x3,0.3
 team12_A2_filter_5_03,greedy_player,team12_A2_filter_5_03,28,7,empty-2x3,0.3
 greedy_player,team12_A2_filter_5_03,team12_A2_filter_5_03,8,30,empty-2x3,0.3
 team12_A2_filter_5_03,team12_A1,team12_A1,10,31,empty-2x3,0.3

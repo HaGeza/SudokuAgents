@@ -131,9 +131,15 @@ team12_A2,greedy_player,team12_A2,29,8,"random-3x3.txt
 ",0.5
 greedy_player,team12_A2,greedy_player,20,16,"random-3x3.txt
 ",0.5
+team12_A2,team12_A1,draw,19,19,"random-3x3.txt
+",0.5
 team12_A1,team12_A2,team12_A1,26,18,"random-3x3.txt
 ",0.5
+team12_A2,team12_A1,draw,19,19,"random-3x3.txt
+",0.5
 team12_A1,team12_A2,team12_A1,33,11,"random-3x3.txt
+",0.5
+team12_A2,team12_A1,draw,19,19,"random-3x3.txt
 ",0.5
 team12_A1,team12_A2,team12_A1,26,18,"random-3x3.txt
 ",0.5
@@ -329,6 +335,8 @@ team12_A2,team12_A1,team12_A1,16,39,"random-3x4.txt
 ",0.5
 team12_A1,team12_A2,team12_A1,31,18,"random-3x4.txt
 ",0.5
+team12_A2,greedy_player,draw,23,23,"random-3x4.txt
+",1.0
 greedy_player,team12_A2,team12_A2,13,34,"random-3x4.txt
 ",1.0
 team12_A2,greedy_player,team12_A2,24,22,"random-3x4.txt
