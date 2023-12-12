@@ -15,4 +15,9 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         super().__init__()
 
     def compute_best_move(self, game_state: GameState) -> None:
-        play_minimax_game(game_state, self.propose_move, options={'value_filter': {'available_le': 3, 'min_keep': 0.1}})
+        play_minimax_game(game_state, self.propose_move, options={
+            'penalty_only_on_last': False,
+            'detect_taboo': True, 'account_for_finish': True,
+            'sort': False, 'shuffle': False,
+            'value_filter': {'available_le': 1, 'min_keep': 1.0}
+        })
