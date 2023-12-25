@@ -6,10 +6,7 @@ from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
 import numpy as np
 
-# Basic numpy operations implemented
-# Availability tensor implemented
-# Taboo state detection implemented
-
+# Needed for recursion
 class GameTree: pass
 
 class GameTree:
@@ -18,22 +15,11 @@ class GameTree:
     """
 
     """
-    O---------------+--------------+------------+-O
-    |              Row not completed            | |
-    +----------------+--------------+-----------+-|
-    |                | Block n. c.  | Block c.  | |
-    +-+--------------+--------------+-----------+-+
-    | | Column n. c. |      0       |     1     |-|
-    | | Column c.    |      1       |     3     |-|
-    +-+--------------+--------------+-----------+-+
-    |                 Row completed               |
-    +----------------+--------------+-----------+-+
-    |                | Block n. c.  | Block c.  | |
-    +-+--------------+--------------+-----------+-+
-    | | Column n. c. |      1       |     3     | |
-    | | Column c.    |      3       |     7     | |
-    +-+--------------+--------------+-----------+-+
-    O----------------+--------------+-----------+-O
+    Each index represents whether a region was filled in or not:
+    - [0][0][0] => 0 points rewarded
+    - [1][0][0], [0][1][0], [0][0][1] => 1 point
+    - [1][1][0], [1][0][1], [0][1][1] => 3 point
+    - [1][1][1] => 7 points
     """
     REWARDS = [
         [
@@ -109,6 +95,7 @@ class GameTree:
         @param board: the current board as an np.array
         @param available: the available values for each cell as an np.array
         @param empty_left: the number of empty cells remaining
+        @param finished: indicator for whether the game tree is finished
         """                 
 
         self.gs = gs
@@ -136,6 +123,7 @@ class GameTree:
 
         @param i: row index
         @param j: column index 
+        @return: np.array containing block elements
         """
 
         top, bottom, left, right = self._get_block_boundaries(i, j)
@@ -175,7 +163,7 @@ class GameTree:
         @param move: the move
         @param maximizer: `True` if maximizing player, `False` if minimizing player
         @param last_depth: `True` if the game tree won't be expanded further, i.e. depth=1
-        @return: reward
+        @return: the game tree rooted in the state resulting from applying `move`
         """
 
         gt = self._copy()
@@ -225,6 +213,8 @@ class GameTree:
     def _get_possible_moves(self) -> [Move]:
         """
         Get all possible moves for the current game state. 
+
+        @return: list of possible moves
         """
 
         available_inds = np.argwhere(self.available) + [0, 0, 1]

@@ -91,6 +91,11 @@ play_counts = df['player1'].value_counts() + df['player2'].value_counts()
 print(play_counts)
 win_counts = df['winner'].value_counts()
 print(win_counts)
+
+groups = df.groupby(['player1', 'player2'])
+group_counts = groups['winner'].value_counts()
+print(group_counts)
+
 # for player in ['team12_A2', 'team12_A1', 'gr']:
 #     p1_rows = df[df['player1'] == player]
 #     p1_score = p1_rows['score1'].sum()
@@ -101,8 +106,8 @@ print(win_counts)
 #     p2_total = p2_score + p2_rows['score1'].sum()
 #     print(f'{player}: {p2_score} / {p2_total}, ({p2_score / p2_total})')
     
-df.to_csv(sys.argv[2], index=False)
-df_depth = pd.DataFrame(depth_data)
-df_depth.to_csv('_depth.'.join(sys.argv[2].rsplit('.', 1)), index=False)
+# df.to_csv(sys.argv[2], index=False)
+# df_depth = pd.DataFrame(depth_data)
+# df_depth.to_csv('_depth.'.join(sys.argv[2].rsplit('.', 1)), index=False)
 
 
