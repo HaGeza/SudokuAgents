@@ -98,6 +98,7 @@ def simulate_game(initial_board: SudokuBoard,
                     print(f'Error: {best_move} is a taboo move. Player {3-player_number} wins the game.')
                     return (0, 1) if player_number == 1 else (1, 0)
                 board_text = str(game_state.board)
+                print(board_text)
                 options = f'--move "{game_state.board.rc2f(i, j)} {value}"'
                 output = solve_sudoku(SUDOKU_SOLVER, board_text, options)
                 if 'Invalid move' in output:
