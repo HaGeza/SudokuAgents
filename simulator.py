@@ -282,8 +282,7 @@ if __name__ == '__main__':
     # simulator = Simulator(gsd)
     # simulator.simulate_games(10000)
 
-    checkpoint = 99
-
+    checkpoint = 0
     if checkpoint > 0:
         gsd.load_from_file('tt_checkpoint.json')
 
@@ -311,4 +310,4 @@ if __name__ == '__main__':
                 i += 1
                 counter += 1
 
-gsd.write_to_file('tt.json')
+    gsd.write_to_file('tt.json')
