@@ -1,0 +1,155 @@
+Playing game 1
+Score: 17 - 19
+Player 2 wins the game.
+team12_A3 - team12_A3_finish_term 0-1
+
+Playing game 2
+Score: 20 - 19
+Player 1 wins the game.
+team12_A3_finish_term - team12_A3 1-0
+
+Playing game 3
+Score: 32 - 4
+Player 1 wins the game.
+team12_A3 - team12_A3_finish_term 1-0
+
+Playing game 4
+Score: 19 - 17
+Player 1 wins the game.
+team12_A3_finish_term - team12_A3 1-0
+
+Playing game 5
+Score: 32 - 6
+Player 1 wins the game.
+team12_A3 - team12_A3_finish_term 1-0
+
+Playing game 6
+Score: 21 - 14
+Player 1 wins the game.
+team12_A3_finish_term - team12_A3 1-0
+
+Match result: team12_A3 - team12_A3_finish_term 2-4
+Playing game 1
+Score: 20 - 23
+Player 2 wins the game.
+team12_A3 - team12_A3_finish_term 0-1
+
+Playing game 2
+Score: 18 - 18
+The game ends in a draw.
+team12_A3_finish_term - team12_A3 0.5-0.5
+
+Playing game 3
+Score: 14 - 21
+Player 2 wins the game.
+team12_A3 - team12_A3_finish_term 0-1
+
+Playing game 4
+Score: 19 - 16
+Player 1 wins the game.
+team12_A3_finish_term - team12_A3 1-0
+
+Playing game 5
+Score: 16 - 19
+Player 2 wins the game.
+team12_A3 - team12_A3_finish_term 0-1
+
+Playing game 6
+Score: 23 - 14
+Player 1 wins the game.
+team12_A3_finish_term - team12_A3 1-0
+
+Match result: team12_A3 - team12_A3_finish_term 0.5-5.5
+Playing game 1
+Score: 20 - 19
+Player 1 wins the game.
+team12_A3 - team12_A3_finish_term 1-0
+
+Playing game 2
+Score: 13 - 26
+Player 2 wins the game.
+team12_A3_finish_term - team12_A3 0-1
+
+Playing game 3
+Score: 15 - 20
+Player 2 wins the game.
+team12_A3 - team12_A3_finish_term 0-1
+
+Playing game 4
+Score: 10 - 25
+Player 2 wins the game.
+team12_A3_finish_term - team12_A3 0-1
+
+Playing game 5
+Score: 15 - 21
+Player 2 wins the game.
+team12_A3 - team12_A3_finish_term 0-1
+
+Playing game 6
+Score: 7 - 31
+Player 2 wins the game.
+team12_A3_finish_term - team12_A3 0-1
+
+Match result: team12_A3 - team12_A3_finish_term 4-2
+Playing game 1
+Score: 16 - 20
+Player 2 wins the game.
+team12_A3 - team12_A3_finish_term 0-1
+
+Playing game 2
+Score: 28 - 13
+Player 1 wins the game.
+team12_A3_finish_term - team12_A3 1-0
+
+Playing game 3
+Score: 19 - 16
+Player 1 wins the game.
+team12_A3 - team12_A3_finish_term 1-0
+
+Playing game 4
+Score: 15 - 21
+Player 2 wins the game.
+team12_A3_finish_term - team12_A3 0-1
+
+Playing game 5
+Score: 16 - 24
+Player 2 wins the game.
+team12_A3 - team12_A3_finish_term 0-1
+
+Playing game 6
+Score: 23 - 15
+Player 1 wins the game.
+team12_A3_finish_term - team12_A3 1-0
+
+Match result: team12_A3 - team12_A3_finish_term 2-4
+Playing game 1
+Score: 12 - 23
+Player 2 wins the game.
+team12_A3 - team12_A3_finish_term 0-1
+
+Playing game 2
+Score: 26 - 12
+Player 1 wins the game.
+team12_A3_finish_term - team12_A3 1-0
+
+Playing game 3
+Score: 16 - 19
+Player 2 wins the game.
+team12_A3 - team12_A3_finish_term 0-1
+
+Playing game 4
+Score: 28 - 15
+Player 1 wins the game.
+team12_A3_finish_term - team12_A3 1-0
+
+Playing game 5
+Score: 21 - 15
+Player 1 wins the game.
+team12_A3 - team12_A3_finish_term 1-0
+
+Playing game 6
+Score: 22 - 16
+Player 1 wins the game.
+team12_A3_finish_term - team12_A3 1-0
+
+Match result: team12_A3 - team12_A3_finish_term 1-5
