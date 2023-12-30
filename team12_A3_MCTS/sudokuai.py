@@ -5,7 +5,7 @@
 import numpy as np
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
-from team12_A3_MCTS.tt import TRANSPOSITION_TABLE
+from team12_A3_MCTS.tt_2x2 import TRANSPOSITION_TABLE
 
 
 class EncodedGameState:

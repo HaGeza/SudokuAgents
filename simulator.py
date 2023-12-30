@@ -1,5 +1,6 @@
 import numpy as np
 import itertools
+import random
 
 from competitive_sudoku.sudoku import SudokuBoard
 from competitive_sudoku.execute import solve_sudoku
@@ -109,13 +110,9 @@ class Simulator:
     EPS = 1e-6
 
 
-    def __init__(self, gsd: GameStateDict, m: int, n: int):
-        self.gsd = gsd
-        self.bs = BoardState(m, n)
-        self.scores = [0, 0]
-
+    def _actualize_parity(self):
         parity_ind = self.gsd.order.index('parity')
-        actual_parity = (m * n) % 2
+        actual_parity = (self.bs.m * self.bs.n) % 2
         self.gsd.root[parity_ind] = actual_parity
         region_par_ind = self.gsd.order.index('region_parity')
         self.gsd.root[region_par_ind] = self.gsd.resolutions[region_par_ind] * actual_parity
@@ -123,6 +120,14 @@ class Simulator:
         self.bs.row_odd[:] = actual_parity
         self.bs.col_odd[:] = actual_parity
         self.bs.box_odd[:, :] = actual_parity
+
+
+    def __init__(self, gsd: GameStateDict, m: int = 0, n: int = 0):
+        self.gsd = gsd
+        self.scores = [0, 0]
+        if [m, n] != [0, 0]:
+            self.bs = BoardState(m, n)
+            self._actualize_parity()
 
 
     def _encode(self, parent_gs: list, i: int, j: int, value: int) -> (list, bool):
@@ -168,7 +173,7 @@ class Simulator:
     def _uct(self, parent_gs: list, child_gs, C: int = 2) -> float:
         n_parent, _ = gsd.get(parent_gs)
         n_child, q_child = gsd.get(child_gs)
-        return q_child / (n_child+ Simulator.EPS) +\
+        return q_child / (n_child+ Simulator.EPS) + \
                C * np.sqrt(np.log(n_parent) / (n_child + Simulator.EPS))
 
 
@@ -221,19 +226,25 @@ class Simulator:
         self.gsd.update(parent_gs, q)
         return q
 
+    def simulate_game(self):
+        gs = gsd.root
+        # select random starting player
+        player_ind = gsd.order.index('player')
+        gs[player_ind] = np.random.choice([0, 1])
 
-    def simulate_games(self, num_games: int = 3):
+        self.bs.reset()
+        self.scores = [0, 0]
+        gsd.update(gs, self._do_next_move(gs))
+
+
+    def simulate_games_radom(self, num_games: int = 100):
         for i in range(num_games):
-            gs = gsd.root
-            # select random starting player
-            player_ind = gsd.order.index('player')
-            gs[player_ind] = np.random.choice([0, 1])
+            m, n = random.choice([[2, 2], [2, 3], [3, 3], [3, 4], [4, 4]])
+            self.bs = BoardState(m, n)
+            self._actualize_parity()
 
-            self.bs.reset()
-            self.scores = [0, 0]
-
-            gsd.update(gs, self._do_next_move(gs))
-            print(f'{i+1}/{num_games} simulated')
+            self.simulate_game()
+            print(f'{i+1}/{num_games} simulated - ({m} x {n})')
 
 
 if __name__ == '__main__':        
@@ -242,13 +253,19 @@ if __name__ == '__main__':
         'parity': [0, 1],
         'points': list(np.unique(Simulator.REWARDS)),
         'region_parity': list(range(0, 3 * 16 + 1)),
-        # Use step size of 4 to reduce state space size
         'missing': list(range(16*16, -1, -1))
     })
 
-    # np.random.seed(0)
-    simulator = Simulator(gsd, 2, 2)
-    simulator.simulate_games(100)
+    np.random.seed(0)
+    # simulator = Simulator(gsd)
+    # simulator.simulate_games(10000)
+    for size, num_games in zip([[4, 4], [3, 4], [3, 3], [2, 3], [2, 2]],
+                               [100, 250, 500, 1000, 2000]):
+        simulator = Simulator(gsd, *size)
+        for i in range(num_games):
+            simulator.simulate_game()
+            print(f'{i+1}/{num_games} simulated - ({size[0]} x {size[1]})')
+
 
     import json
 

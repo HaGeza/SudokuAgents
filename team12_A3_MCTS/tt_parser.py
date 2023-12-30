@@ -10,5 +10,5 @@ tt = {int(k): ast.literal_eval(v) for k, v in tt.items()}
 # Sort by key
 tt = dict(sorted(tt.items()))
 
-with open('team12_A3_MCTS/tt.py', 'w') as file:
-    file.write(f'TRANSPOSITION_TABLE = {tt}')
+# with open('team12_A3_MCTS/tt.py', 'w') as file:
+print(f'TRANSPOSITION_TABLE = {tt}')
