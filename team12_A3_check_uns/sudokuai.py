@@ -85,8 +85,8 @@ class GameTree:
         self.available[top:bottom, left:right, value - 1] = False
 
 
-    def __init__(self, gs: GameState, h_scores: [int], board: np.array,
-                 available: np.array, empty_left: int, finished: [bool] = [False]):
+    def __init__(self, gs: GameState, h_scores: [int], board: np.ndarray,
+                 available: np.ndarray, empty_left: int, finished: [bool] = [False]):
         """
         Initialize the game tree. 
 
@@ -117,7 +117,7 @@ class GameTree:
                         self.available.copy(), self.empty_left, self.finished)
 
 
-    def _get_block(self, i: int, j: int) -> np.array:
+    def _get_block(self, i: int, j: int) -> np.ndarray:
         """
         Get the elements in the block where the cell (i,j) is located.
 
@@ -143,7 +143,7 @@ class GameTree:
         self.h_scores[score_ind] += reward
 
 
-    def _is_taboo_state(self) -> bool:
+    def _quick_check_unsolvable(self) -> bool:
         """
         Check if the current game state is a taboo state. Taboo states have at
         least one empty cell, where no legal move is possible.
@@ -152,6 +152,43 @@ class GameTree:
         """        
 
         return np.any((np.sum(self.available, axis=2) + (self.board != SudokuBoard.empty)) == 0)
+
+    
+    def _unsolvable_region(self, available: np.ndarray) -> bool:
+        prev_limit = -1
+        limit = available.shape[0]
+
+        while prev_limit != limit and limit > 0: 
+            prev_limit = limit
+            available_per_cell = np.sum(available, axis=1)
+            available = available[available_per_cell < limit, :]
+            limit = available.shape[0]
+
+        available = np.bitwise_or.reduce(available, axis=0)
+        return np.count_nonzero(available) < limit
+
+
+    def _check_unsolvable(self) -> bool:
+        for i in range(self.gs.board.N):
+            board_row = self.board[i, :]
+            available_row = self.available[i, :, :]
+            if self._unsolvable_region(available_row[board_row == 0, :]):
+                return True
+        
+        for j in range(self.gs.board.N):
+            board_col = self.board[:, j]
+            available_col = self.available[:, j, :]
+            if self._unsolvable_region(available_col[board_col == 0, :]):
+                return True
+
+        for b_i in range(0, self.gs.board.N, self.gs.board.m):
+            for b_j in range(0, self.gs.board.N, self.gs.board.n):
+                board_box = self.board[b_i:b_i+self.gs.board.m, b_j:b_j+self.gs.board.n]
+                available_box = self.available[b_i:b_i+self.gs.board.m, b_j:b_j+self.gs.board.n, :]
+                if self._unsolvable_region(available_box[board_box == 0]):
+                    return True
+
+        return False
 
 
     def _apply_move(self, move: Move, maximizer: bool, last_depth: bool) -> GameTree:
@@ -171,7 +208,7 @@ class GameTree:
         gt.board[move.i, move.j] = move.value
         gt._update_available(move.i, move.j)
 
-        if gt._is_taboo_state():
+        if gt._quick_check_unsolvable() or gt._check_unsolvable():
             gt = self._copy()
             gt.available[move.i, move.j, move.value - 1] = False
             return gt

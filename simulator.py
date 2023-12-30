@@ -89,6 +89,43 @@ class BoardState:
         return np.any((np.sum(self.available, axis=2) + (self.board != 0)) == 0)
 
 
+    def unsolvable_region(self, available: np.ndarray) -> bool:
+        prev_limit = -1
+        limit = available.shape[0]
+
+        while prev_limit != limit and limit > 0: 
+            prev_limit = limit
+            available_per_cell = np.sum(available, axis=1)
+            available = available[available_per_cell < limit, :]
+            limit = available.shape[0]
+
+        available = np.bitwise_or.reduce(available, axis=0)
+        return np.count_nonzero(available) < limit
+
+
+    def check_unsolvable(self) -> bool:
+        for i in range(self.N):
+            board_row = self.board[i, :]
+            available_row = self.available[i, :, :]
+            if self.unsolvable_region(available_row[board_row == 0, :]):
+                return True
+        
+        for j in range(self.N):
+            board_col = self.board[:, j]
+            available_col = self.available[:, j, :]
+            if self.unsolvable_region(available_col[board_col == 0, :]):
+                return True
+
+        for b_i in range(0, self.N, self.m):
+            for b_j in range(0, self.N, self.n):
+                board_box = self.board[b_i:b_i+self.m, b_j:b_j+self.n]
+                available_box = self.available[b_i:b_i+self.m, b_j:b_j+self.n, :]
+                if self.unsolvable_region(available_box[board_box == 0]):
+                    return True
+
+        return False
+
+
     def apply_move(self, i: int, j: int, value: int):
         self.board[i, j] = value
 
@@ -163,7 +200,7 @@ class Simulator:
         self.bs.apply_move(i, j, value)
 
         # Is the resulting board unsolvable?
-        unsolvable = self.bs.quick_check_unsolvable()
+        unsolvable = self.bs.quick_check_unsolvable() or self.bs.check_unsolvable()
 
         if not unsolvable:
             # Parity flips
@@ -227,17 +264,19 @@ class Simulator:
             i, j, value = moves[move_ind]
             state, unsolvable = self._encode(parent_gs, i, j, value)
 
-        if not unsolvable:
-            self.bs.board[i, j] = value        
-            board_text = str(self.bs)
-            output = solve_sudoku(SUDOKU_SOLVER, board_text)
-            if 'has no solution' in output:
-                unsolvable = True
-                state = parent_gs.copy()
-                state[player_ind] = 1 - state[player_ind]
-            self.bs.board[i, j] = 0
+        self.bs.board[i, j] = value        
+        board_text = str(self.bs)
+        output = solve_sudoku(SUDOKU_SOLVER, board_text)
+        real_unsolvable = 'has no solution' in output
 
-        if unsolvable:
+        assert(real_unsolvable or (unsolvable == real_unsolvable))
+
+        if real_unsolvable:
+            state = parent_gs.copy()
+            state[player_ind] = 1 - state[player_ind]
+        self.bs.board[i, j] = 0
+
+        if real_unsolvable:
             self.bs.available[i, j, value - 1] = False
         else:
             self.bs.apply_move(i, j, value)
@@ -282,32 +321,35 @@ if __name__ == '__main__':
     # simulator = Simulator(gsd)
     # simulator.simulate_games(10000)
 
+    np.random.seed(0)    
+
     checkpoint = 0
     if checkpoint > 0:
         gsd.load_from_file('tt_checkpoint.json')
 
     counter = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-        for size, num_games in zip([[4, 4], [3, 4], [3, 3], [2, 3], [2, 2]], [100, 250, 500, 1000, 2000]):
-            if counter + num_games <= checkpoint:
-                counter += num_games
-                continue
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+    for size, num_games in zip([[4, 4], [3, 4], [3, 3], [2, 3], [2, 2]], [100, 250, 500, 1000, 2000]):
+        if counter + num_games <= checkpoint:
+            counter += num_games
+            continue
 
-            simulator = Simulator(gsd, *size)
-            i = max(0, checkpoint - counter)
-            counter += i 
-            while i < num_games:
-                future = executor.submit(simulator.simulate_game)
-                try:
-                    future.result(timeout=60)
-                except concurrent.futures.TimeoutError:
-                    print('simulate_game timed out, retrying...')
-                    gsd.load_from_file('tt_checkpoint.json')
-                    continue
+        simulator = Simulator(gsd, *size)
+        i = max(0, checkpoint - counter)
+        counter += i 
+        while i < num_games:
+            # future = executor.submit(simulator.simulate_game)
+            # try:
+            #     future.result()
+            # except concurrent.futures.TimeoutError:
+            #     print('simulate_game timed out, retrying...')
+            #     # gsd.load_from_file('tt_checkpoint.json')
+            #     continue
+            simulator.simulate_game()
 
-                gsd.write_to_file('tt_checkpoint.json')
-                print(f'{i+1}/{num_games} simulated - ({size[0]} x {size[1]})')
-                i += 1
-                counter += 1
+            # gsd.write_to_file('tt_checkpoint.json')
+            print(f'{i+1}/{num_games} simulated - ({size[0]} x {size[1]})')
+            i += 1
+            counter += 1
 
-    gsd.write_to_file('tt.json')
+    # gsd.write_to_file('tt.json')

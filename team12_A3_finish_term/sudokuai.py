@@ -192,7 +192,7 @@ class GameTree:
 
 
     # Test various C values [1, 5, 10, 25, 100]
-    def _finish_term(self, maximizer, C=100) -> float:
+    def _finish_term(self, maximizer, C=1) -> float:
         # constant_multiplier * late_game_scaler * indicator
         return C * (1 - (self.empty_left / (self.gs.board.N**2))) * \
             (1 if self.empty_left % 2 == maximizer else -1)
