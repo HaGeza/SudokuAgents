@@ -176,6 +176,7 @@ class GameTree:
             gt.available[move.i, move.j, move.value - 1] = False
             return gt
 
+        gt.empty_left -= 1
         # Count the number of empty cells in the row, column and block
         row_cnt = np.sum(gt.board[move.i, :] == SudokuBoard.empty)
         col_cnt = np.sum(gt.board[:, move.j] == SudokuBoard.empty)
@@ -189,8 +190,15 @@ class GameTree:
 
         return gt
 
+
+    # Test various C values [1, 5, 10, 25, 100]
+    def _finish_term(self, maximizer, C=100) -> float:
+        # constant_multiplier * late_game_scaler * indicator
+        return C * (1 - (self.empty_left / (self.gs.board.N**2))) * \
+            (1 if self.empty_left % 2 == maximizer else -1)
+
     
-    def _evaluate(self) -> float:
+    def _evaluate(self, maximizer: bool) -> float:
         """"
         Evaluate the current game state.
 
@@ -198,7 +206,8 @@ class GameTree:
         """
 
         current_player = self.gs.current_player() - 1
-        return self.h_scores[current_player] - self.h_scores[1 - current_player]
+        return self.h_scores[current_player] - self.h_scores[1 - current_player] + \
+               self._finish_term(maximizer)
 
 
     VALUE_FILTER = {
@@ -274,11 +283,11 @@ class GameTree:
         """
         if depth == 0:
             self.finished[0] = False
-            return (self._evaluate(), None)
+            return (self._evaluate(maximizer), None)
 
         all_moves = self._get_possible_moves()
         if len(all_moves) == 0:
-            return (self._evaluate(), None)
+            return (self._evaluate(maximizer), None)
 
         best_score = float('-inf') if maximizer else float('inf')
         best_move = None
