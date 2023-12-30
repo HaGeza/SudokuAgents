@@ -1,6 +1,10 @@
 import numpy as np
 import itertools
 import random
+import json
+import ast
+import concurrent.futures
+import time
 
 from competitive_sudoku.sudoku import SudokuBoard
 from competitive_sudoku.execute import solve_sudoku
@@ -37,6 +41,25 @@ class GameStateDict:
         key = self._get_key(values)
         self.dict[key][0] += 1
         self.dict[key][1] += q
+
+
+    def write_to_file(self, path='tt.json'):
+        compatible_dict = {}
+        for key, value in gsd.dict.items():
+            compatible_dict[int(key)] = str(value)
+
+        with open(path, 'w') as file:
+            json.dump({
+                'order': gsd.order, 
+                'dict': compatible_dict
+            }, file, indent=2)
+
+    def load_from_file(self, path='tt.json'):
+        with open(path, 'r') as file:
+            contents = json.load(file)
+            gsd.order = contents['order']
+            gsd.dict = contents['dict']
+            gsd.dict = {int(key): ast.literal_eval(value) for key, value in gsd.dict.items()}
 
 
 class BoardState:
@@ -256,25 +279,36 @@ if __name__ == '__main__':
         'missing': list(range(16*16, -1, -1))
     })
 
-    np.random.seed(0)
     # simulator = Simulator(gsd)
     # simulator.simulate_games(10000)
-    for size, num_games in zip([[4, 4], [3, 4], [3, 3], [2, 3], [2, 2]],
-                               [100, 250, 500, 1000, 2000]):
-        simulator = Simulator(gsd, *size)
-        for i in range(num_games):
-            simulator.simulate_game()
-            print(f'{i+1}/{num_games} simulated - ({size[0]} x {size[1]})')
 
+    checkpoint = 99
 
-    import json
+    if checkpoint > 0:
+        gsd.load_from_file('tt_checkpoint.json')
 
-    compatible_dict = {}
-    for key, value in gsd.dict.items():
-        compatible_dict[int(key)] = str(value)
+    counter = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        for size, num_games in zip([[4, 4], [3, 4], [3, 3], [2, 3], [2, 2]], [100, 250, 500, 1000, 2000]):
+            if counter + num_games <= checkpoint:
+                counter += num_games
+                continue
 
-    with open('tt.json', 'w') as file:
-        json.dump({
-            'order': gsd.order, 
-            'dict': compatible_dict
-        }, file, indent=2)
+            simulator = Simulator(gsd, *size)
+            i = max(0, checkpoint - counter)
+            counter += i 
+            while i < num_games:
+                future = executor.submit(simulator.simulate_game)
+                try:
+                    future.result(timeout=60)
+                except concurrent.futures.TimeoutError:
+                    print('simulate_game timed out, retrying...')
+                    gsd.load_from_file('tt_checkpoint.json')
+                    continue
+
+                gsd.write_to_file('tt_checkpoint.json')
+                print(f'{i+1}/{num_games} simulated - ({size[0]} x {size[1]})')
+                i += 1
+                counter += 1
+
+gsd.write_to_file('tt.json')
