@@ -5,6 +5,7 @@
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
 import numpy as np
+from team12_A3_tt.tt import TRANSPOSITION_TABLE
 
 # Needed for recursion
 class GameTree: pass
@@ -86,7 +87,8 @@ class GameTree:
 
 
     def __init__(self, gs: GameState, h_scores: [int], board: np.array,
-                 available: np.array, empty_left: int, finished: [bool] = [False]):
+                 available: np.array, empty_left: int, region_parity: int,
+                 finished: [bool] = [False]):
         """
         Initialize the game tree. 
 
@@ -95,6 +97,7 @@ class GameTree:
         @param board: the current board as an np.array
         @param available: the available values for each cell as an np.array
         @param empty_left: the number of empty cells remaining
+        @param region_parity: the sum of parities of missing elements in the regions
         @param finished: indicator for whether the game tree is finished
         """                 
 
@@ -103,6 +106,7 @@ class GameTree:
         self.board = board
         self.available = available
         self.empty_left = empty_left
+        self.region_parity = region_parity
         self.finished = finished
 
 
@@ -114,7 +118,8 @@ class GameTree:
         """
         
         return GameTree(self.gs, self.h_scores.copy(), self.board.copy(),
-                        self.available.copy(), self.empty_left, self.finished)
+                        self.available.copy(), self.empty_left, self.region_parity,
+                        self.finished)
 
 
     def _get_block(self, i: int, j: int) -> np.array:
@@ -143,10 +148,10 @@ class GameTree:
         self.h_scores[score_ind] += reward
 
 
-    def _is_taboo_state(self) -> bool:
+    def _quick_check_unsolvable(self) -> bool:
         """
-        Check if the current game state is a taboo state. Taboo states have at
-        least one empty cell, where no legal move is possible.
+        Check if the current game state is unsolvable, by checking if there is
+        at least one empty cell, where no move is available.
 
         @return: `True` if the current game state is a taboo state, `False` otherwise
         """        
@@ -154,7 +159,13 @@ class GameTree:
         return np.any((np.sum(self.available, axis=2) + (self.board != SudokuBoard.empty)) == 0)
 
 
-    def _apply_move(self, move: Move, maximizer: bool, last_depth: bool) -> GameTree:
+    def _get_tt_score(self, player: int, parity: int, reward: int, region_parity: int, missing: int) -> float:
+        key = ((((player << 1) + parity) << 2 + reward) * 49 + region_parity) << 8 + missing
+        p, q = TRANSPOSITION_TABLE.get(key, [0, 0])
+        return q / (p + 1e-6)
+
+
+    def _apply_move(self, move: Move, maximizer: bool, last_depth: bool, first_depth: bool) -> (GameTree, int):
         """
         Put `move.value` into cell `(move.i, move.j)`. Check if the row, column and block are filled in,
         or if the opposing player will be able to fill them in on the next move.
@@ -171,10 +182,17 @@ class GameTree:
         gt.board[move.i, move.j] = move.value
         gt._update_available(move.i, move.j)
 
-        if gt._is_taboo_state():
+        if gt._quick_check_unsolvable():
             gt = self._copy()
             gt.available[move.i, move.j, move.value - 1] = False
-            return gt
+
+            tt_score = 0
+            if first_depth:
+                player = 2 - gt.gs.current_player()
+                parity = gt.empty_left & 1
+                tt_score = gt._get_tt_score(player, parity, 0, gt.region_parity, gt.empty_left)
+
+            return gt, tt_score
 
         gt.empty_left -= 1
         # Count the number of empty cells in the row, column and block
@@ -184,11 +202,19 @@ class GameTree:
 
         # Filling in a region gives reward. Leaving a region with just one empty cell
         # gives penalty, IF AND ONLY IF the tree will not be expanded further.
-        reward = self.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0] - \
-                last_depth * self.PENALTY[row_cnt == 1][col_cnt == 1][box_cnt == 1]
-        gt._update_score(reward, maximizer)        
+        reward = GameTree.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0]
+        penalized_reward = reward - last_depth * GameTree.PENALTY[
+                                  row_cnt == 1][col_cnt == 1][box_cnt == 1]
+        gt._update_score(penalized_reward, maximizer)        
 
-        return gt
+        tt_score = 0
+        if first_depth:
+            player = 2 - gt.gs.current_player()
+            parity = gt.empty_left & 1
+            region_parity = gt.region_parity + 2 * (row_cnt & 1 + col_cnt & 1 + box_cnt & 1) - 3
+            tt_score = gt._get_tt_score(player, parity, reward, region_parity, gt.empty_left)
+
+        return gt, tt_score
 
 
     def _finish_term(self, maximizer) -> float:
@@ -255,7 +281,7 @@ class GameTree:
         board = np.full((N, N), SudokuBoard.empty, dtype=int)
         available = np.full((N, N, N), True, dtype=bool)
 
-        gt = GameTree(game_state, [0, 0], board, available, 0, [False])
+        gt = GameTree(game_state, [0, 0], board, available, 0, 0, [False])
 
         for i in range(N):
             for j in range(N):
@@ -266,11 +292,19 @@ class GameTree:
             gt.available[taboo_move.i, taboo_move.j, taboo_move.value - 1] = False
 
         gt.empty_left = np.sum(board == SudokuBoard.empty)
+        # Sum parities of missing elements in regions
+        gt.region_parity = np.sum(np.sum(board == SudokuBoard.empty, axis=1) & 1) + \
+                            np.sum(np.sum(board == SudokuBoard.empty, axis=0) & 1) 
+        for b_i in range(0, N, gt.gs.board.m):
+            for b_j in range(0, N, gt.gs.board.n):
+                gt.region_parity += np.sum(np.sum(
+                    board[b_i:b_i + gt.gs.board.m,
+                          b_j:b_j + gt.gs.board.n] == SudokuBoard.empty) & 1)
 
         return gt
 
 
-    def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move):
+    def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float, first_depth: bool) -> (float, Move):
         """
         Minimax algorithm with alpha-beta pruning. 
 
@@ -293,8 +327,9 @@ class GameTree:
 
         if maximizer:
             for move in all_moves:
-                score, _ = self._apply_move(move, True, depth == 1).minimax(
-                                                        depth - 1, False, alpha, beta)
+                gt, tt_score = self._apply_move(move, True, depth == 1, first_depth)
+                score, _ = gt.minimax(depth - 1, False, alpha, beta, False)
+                score += tt_score
 
                 if score > best_score:
                     best_score = score
@@ -305,8 +340,9 @@ class GameTree:
                     break
         else:
             for move in all_moves:
-                score, _ = self._apply_move(move, False, depth == 1).minimax(
-                                                        depth - 1, True, alpha, beta)
+                gt, tt_score = self._apply_move(move, False, depth == 1, first_depth)
+                score, _ = gt.minimax(depth - 1, True, alpha, beta, False)
+                score += tt_score
 
                 if score < best_score:
                     best_score = score
@@ -344,7 +380,7 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         depth = 1
         while not tree.finished[0]:
             tree.finished[0] = True            
-            _, move = tree.minimax(depth, True, float('-inf'), float('inf'))
+            _, move = tree.minimax(depth, True, float('-inf'), float('inf'), True)
 
             # Safety check
             if move is not None:

@@ -4,7 +4,7 @@ import pandas as pd
 import sys
 
 if len(sys.argv) < 3:
-    print('Usage: python parse_game_output.py <log_file> <output_file>')
+    print('Usage: python parse_game_output.py <log_file> <output_file> [board=<board_name>, time=<time>]')
     sys.exit(1)
 
 data = []
@@ -96,18 +96,18 @@ groups = df.groupby(['player1', 'player2'])
 group_counts = groups['winner'].value_counts()
 print(group_counts)
 
-# for player in ['team12_A2', 'team12_A1', 'gr']:
-#     p1_rows = df[df['player1'] == player]
-#     p1_score = p1_rows['score1'].sum()
-#     p1_total = p1_score + p1_rows['score2'].sum()
-#     print(f'{player}: {p1_score} / {p1_total}, ({p1_score / p1_total})')
-#     p2_rows = df[df['player2'] == player]
-#     p2_score = p2_rows['score2'].sum()
-#     p2_total = p2_score + p2_rows['score1'].sum()
-#     print(f'{player}: {p2_score} / {p2_total}, ({p2_score / p2_total})')
+for player in ['team12_A3_finish_term', 'team12_A3']:
+    p1_rows = df[df['player1'] == player]
+    p1_score = p1_rows['score1'].sum()
+    p1_total = p1_score + p1_rows['score2'].sum()
+    print(f'{player}: {p1_score} / {p1_total}, ({p1_score / p1_total})')
+    p2_rows = df[df['player2'] == player]
+    p2_score = p2_rows['score2'].sum()
+    p2_total = p2_score + p2_rows['score1'].sum()
+    print(f'{player}: {p2_score} / {p2_total}, ({p2_score / p2_total})')
     
-# df.to_csv(sys.argv[2], index=False)
-# df_depth = pd.DataFrame(depth_data)
-# df_depth.to_csv('_depth.'.join(sys.argv[2].rsplit('.', 1)), index=False)
+df.to_csv(sys.argv[2], index=False)
+df_depth = pd.DataFrame(depth_data)
+df_depth.to_csv('_depth.'.join(sys.argv[2].rsplit('.', 1)), index=False)
 
 
