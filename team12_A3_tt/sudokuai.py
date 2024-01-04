@@ -160,7 +160,7 @@ class GameTree:
 
 
     def _get_tt_score(self, player: int, parity: int, reward: int, region_parity: int, missing: int) -> float:
-        key = ((((player << 1) + parity) << 2 + reward) * 49 + region_parity) << 8 + missing
+        key = ((((player << 1) + parity) << 2 + reward) * 49 + region_parity) * 257 + missing
         p, q = TRANSPOSITION_TABLE.get(key, [0, 0])
         return q / (p + 1e-6)
 

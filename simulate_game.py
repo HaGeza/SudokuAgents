@@ -97,7 +97,7 @@ def simulate_game(initial_board: SudokuBoard,
             i, j, value = player.best_move
             best_move = Move(i, j, value)
             log(f'Best move: {best_move}')
-            # log(f'Number of proposals: {player.num_prop.value}', force=True)
+            log(f'Number of proposals: {player.num_prop.value}', force=True)
             player_score = 0
             if best_move != Move(0, 0, 0):
                 if TabooMove(i, j, value) in game_state.taboo_moves:

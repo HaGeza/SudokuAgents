@@ -5,6 +5,7 @@ import json
 import ast
 import concurrent.futures
 import time
+import sys
 
 from competitive_sudoku.sudoku import SudokuBoard
 from competitive_sudoku.execute import solve_sudoku
@@ -13,34 +14,34 @@ import platform
 SUDOKU_SOLVER = 'bin\\solve_sudoku.exe' if platform.system() == 'Windows' else 'bin/solve_sudoku'
 
 class GameStateDict:
-    def _get_key(self, prop_vals: list) -> int:
-        key = 0
-        for i, val in enumerate(prop_vals):
-            key = key * (self.resolutions[i] + 1) + val
-        return key
+    def _get_key(self, encoded: dict) -> int:
+        gsd_key = 0
+        for key, val in encoded.items():
+            gsd_key = gsd_key * (self.resolutions[key] + 1) + val
+        return gsd_key
 
 
     def __init__(self, properties: dict):
         self.order = list(properties.keys())
-        self.root = [vals[0] for vals in properties.values()]
-        self.resolutions = [max(vals) - min(vals) for vals in properties.values()]
+        self.root = {key: vals[0] for key, vals in properties.items()}
+        self.resolutions = {key: max(vals) - min(vals) for key, vals in properties.items()}
         self.dict = {}
 
         values = list(properties.values())
         combinations = list(itertools.product(*values))
         for comb in combinations:
-            key = self._get_key(comb)
+            key = self._get_key(dict(zip(self.order, comb)))
             self.dict[key] = [0, 0]
 
 
-    def get(self, values: list) -> [int, int]:
-        return self.dict[self._get_key(values)]
+    def get(self, encoded: dict) -> [int, int]:
+        return self.dict[self._get_key(encoded)]
         
     
-    def update(self, values: list, q: int):
-        key = self._get_key(values)
+    def update(self, encoded: dict, match_result: int):
+        key = self._get_key(encoded)
         self.dict[key][0] += 1
-        self.dict[key][1] += q
+        self.dict[key][1] += match_result
 
 
     def write_to_file(self, path='tt.json'):
@@ -53,6 +54,7 @@ class GameStateDict:
                 'order': gsd.order, 
                 'dict': compatible_dict
             }, file, indent=2)
+
 
     def load_from_file(self, path='tt.json'):
         with open(path, 'r') as file:
@@ -171,11 +173,9 @@ class Simulator:
 
 
     def _actualize_parity(self):
-        parity_ind = self.gsd.order.index('parity')
         actual_parity = (self.bs.m * self.bs.n) % 2
-        self.gsd.root[parity_ind] = actual_parity
-        region_par_ind = self.gsd.order.index('region_parity')
-        self.gsd.root[region_par_ind] = self.gsd.resolutions[region_par_ind] * actual_parity
+        self.gsd.root['parity'] = actual_parity
+        self.gsd.root['region_parity'] = self.gsd.resolutions['region_parity'] * actual_parity
 
         self.bs.row_odd[:] = actual_parity
         self.bs.col_odd[:] = actual_parity
@@ -193,8 +193,7 @@ class Simulator:
     def _encode(self, parent_gs: list, i: int, j: int, value: int) -> (list, bool):
         state = parent_gs.copy()
 
-        player_ind = self.gsd.order.index('player')
-        state[player_ind] = 1 - state[player_ind]
+        state['player'] = 1 - state['player']
 
         parent_available = self.bs.available.copy()
         self.bs.apply_move(i, j, value)
@@ -204,26 +203,22 @@ class Simulator:
 
         if not unsolvable:
             # Parity flips
-            parity_ind = self.gsd.order.index('parity')
-            state[parity_ind] = 1 - state[parity_ind]
+            state['parity'] = 1 - state['parity']
             # Update region parity
-            region_par_ind = self.gsd.order.index('region_parity')
             b_i, b_j = i // self.bs.m, j // self.bs.n
-            state[region_par_ind] = int(
+            state['region_parity'] = int(
                 (np.sum(self.bs.row_odd) + np.sum(self.bs.col_odd) + np.sum(self.bs.box_odd)) * \
-                    self.gsd.resolutions[region_par_ind] / (self.bs.N * 3))
+                    self.gsd.resolutions['region_parity'] / (self.bs.N * 3))
             # Points get added accordingly
-            points_ind = self.gsd.order.index('points')
             b_i, b_j = b_i * self.bs.m, b_j * self.bs.n
-            state[points_ind] = Simulator.REWARDS[
+            state['points'] = Simulator.REWARDS[
                 np.all(self.bs.board[i, :] != 0).astype(int)][
                 np.all(self.bs.board[:, j] != 0).astype(int)][
                 np.all(self.bs.board[b_i:b_i+self.bs.m, b_j:b_j+self.bs.n] != 0).astype(int)
             ]
             # Update total missing
-            total_miss_ind = self.gsd.order.index('missing')
-            state[total_miss_ind] = int(
-                state[total_miss_ind] - self.gsd.resolutions[total_miss_ind] / (self.bs.N**2))
+            state['missing'] = int(
+                state['missing'] - self.gsd.resolutions['missing'] / self.bs.N**2)
 
         self.bs.board[i, j] = 0
         self.bs.available = parent_available
@@ -238,11 +233,7 @@ class Simulator:
 
 
     def _do_next_move(self, parent_gs: list) -> int:
-        player_ind = self.gsd.order.index('player')
-        missing_ind = self.gsd.order.index('missing')
-        points_ind = self.gsd.order.index('points')
-
-        if parent_gs[missing_ind] == 0:
+        if parent_gs['missing'] == 0:
             q = 1 if self.scores[0] > self.scores[1] else -1 if self.scores[0] < self.scores[1] else 0
             self.gsd.update(parent_gs, q)
             return q
@@ -259,54 +250,47 @@ class Simulator:
             i, j, value = moves[move_ind]
             state, unsolvable = child_gss[move_ind]
         else:
+            print(moves)
+            print(parent_gs['missing'])
             move_ind = np.random.randint(len(moves))
             # move_ind = 0
             i, j, value = moves[move_ind]
             state, unsolvable = self._encode(parent_gs, i, j, value)
 
         self.bs.board[i, j] = value        
-        board_text = str(self.bs)
-        output = solve_sudoku(SUDOKU_SOLVER, board_text)
-        real_unsolvable = 'has no solution' in output
 
-        assert(real_unsolvable or (unsolvable == real_unsolvable))
+        if not unsolvable:
+            board_text = str(self.bs)
+            output = solve_sudoku(SUDOKU_SOLVER, board_text)
+            unsolvable = 'has no solution' in output
 
-        if real_unsolvable:
+        if unsolvable:
             state = parent_gs.copy()
-            state[player_ind] = 1 - state[player_ind]
+            state['player'] = 1 - state['player']
         self.bs.board[i, j] = 0
 
-        if real_unsolvable:
+        if unsolvable:
             self.bs.available[i, j, value - 1] = False
         else:
             self.bs.apply_move(i, j, value)
 
-        player = parent_gs[player_ind]
+        player = parent_gs['player']
 
-        self.scores[player] += state[points_ind]
+        self.scores[player] += state['points']
         q = self._do_next_move(state)
         self.gsd.update(parent_gs, q)
         return q
 
+
     def simulate_game(self):
         gs = gsd.root
         # select random starting player
-        player_ind = gsd.order.index('player')
-        gs[player_ind] = np.random.choice([0, 1])
+        gs['player'] = np.random.choice([0, 1])
 
         self.bs.reset()
         self.scores = [0, 0]
         gsd.update(gs, self._do_next_move(gs))
 
-
-    def simulate_games_radom(self, num_games: int = 100):
-        for i in range(num_games):
-            m, n = random.choice([[2, 2], [2, 3], [3, 3], [3, 4], [4, 4]])
-            self.bs = BoardState(m, n)
-            self._actualize_parity()
-
-            self.simulate_game()
-            print(f'{i+1}/{num_games} simulated - ({m} x {n})')
 
 
 if __name__ == '__main__':        
@@ -318,38 +302,32 @@ if __name__ == '__main__':
         'missing': list(range(16*16, -1, -1))
     })
 
-    # simulator = Simulator(gsd)
-    # simulator.simulate_games(10000)
-
-    np.random.seed(0)    
-
-    checkpoint = 0
+    checkpoint = int(sys.argv[1]) if len(sys.argv) > 1 else 0
     if checkpoint > 0:
         gsd.load_from_file('tt_checkpoint.json')
 
     counter = 0
-    # with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-    for size, num_games in zip([[4, 4], [3, 4], [3, 3], [2, 3], [2, 2]], [100, 250, 500, 1000, 2000]):
-        if counter + num_games <= checkpoint:
-            counter += num_games
-            continue
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        for size, num_games in zip([[4, 4], [3, 4], [3, 3], [2, 3], [2, 2]], [100, 250, 500, 1000, 2000]):
+            if counter + num_games <= checkpoint:
+                counter += num_games
+                continue
 
-        simulator = Simulator(gsd, *size)
-        i = max(0, checkpoint - counter)
-        counter += i 
-        while i < num_games:
-            # future = executor.submit(simulator.simulate_game)
-            # try:
-            #     future.result()
-            # except concurrent.futures.TimeoutError:
-            #     print('simulate_game timed out, retrying...')
-            #     # gsd.load_from_file('tt_checkpoint.json')
-            #     continue
-            simulator.simulate_game()
+            simulator = Simulator(gsd, *size)
+            i = max(0, checkpoint - counter)
+            counter += i 
+            while i < num_games:
+                future = executor.submit(simulator.simulate_game)
+                try:
+                    future.result(size[0] * size[1] * 10)
+                except concurrent.futures.TimeoutError:
+                    print('simulate_game timed out, retrying...')
+                    gsd.load_from_file('tt_checkpoint.json')
+                    continue
 
-            # gsd.write_to_file('tt_checkpoint.json')
-            print(f'{i+1}/{num_games} simulated - ({size[0]} x {size[1]})')
-            i += 1
-            counter += 1
+                gsd.write_to_file('tt_checkpoint.json')
+                print(f'{i+1}/{num_games} simulated - ({size[0]} x {size[1]})')
+                i += 1
+                counter += 1
 
-    # gsd.write_to_file('tt.json')
+    gsd.write_to_file('tt.json')

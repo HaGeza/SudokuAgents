@@ -3,7 +3,6 @@
 #  https://www.gnu.org/licenses/gpl-3.0.txt)
 
 import random
-import time
 from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
 
@@ -14,22 +13,11 @@ class GameTree:
     """
 
     """
-    O---------------+--------------+------------+-O
-    |              Row not completed            | |
-    +----------------+--------------+-----------+-|
-    |                | Block n. c.  | Block c.  | |
-    +-+--------------+--------------+-----------+-+
-    | | Column n. c. |      0       |     1     |-|
-    | | Column c.    |      1       |     3     |-|
-    +-+--------------+--------------+-----------+-+
-    |                 Row completed               |
-    +----------------+--------------+-----------+-+
-    |                | Block n. c.  | Block c.  | |
-    +-+--------------+--------------+-----------+-+
-    | | Column n. c. |      1       |     3     | |
-    | | Column c.    |      3       |     7     | |
-    +-+--------------+--------------+-----------+-+
-    O----------------+--------------+-----------+-O
+    The points rewarded for a move, depending on how many regions it filled in.
+    0 regions filled in => REWARDS[0][0][0] => 0 points
+    1 regions filled in => REWARDS[1][0][0], REWARDS[0][1][0], REWARDS[0][0][1] => 1 point
+    2 regions filled in => REWARDS[1][1][0], REWARDS[1][0][1], REWARDS[0][1][1] => 3 point
+    3 regions filled in => REWARDS[1][1][1] => 7 point
     """
     REWARDS = [
         [
@@ -38,6 +26,20 @@ class GameTree:
         ],[
             [1, 3],
             [3, 7],
+        ]
+    ]
+
+    """
+    Similar to REWARDS, but indices represent whether or not
+    the given region has exactly 1 empty cell. 
+    """
+    PENALTY = [
+        [
+            [0, 1],
+            [1, 1],
+        ],[
+            [1, 3],
+            [3, 3],
         ]
     ]
 
@@ -105,9 +107,9 @@ class GameTree:
         reg_cnt = sum(value == SudokuBoard.empty for value in self._get_block(move.i, move.j))
 
         # Filling in a region gives reward, but leaving it with just 1 unfilled cell gives penalty,
-        # since the other player will (most likely) fill it in on the next move.
+        # since the other player can fill it in on the next move.
         reward = self.REWARDS[row_cnt == 0][col_cnt == 0][reg_cnt == 0] - \
-                 self.REWARDS[row_cnt == 1][col_cnt == 1][reg_cnt == 1]
+                 self.PENALTY[row_cnt == 1][col_cnt == 1][reg_cnt == 1]
         self._update_score(reward, maximizer)        
 
         return reward
@@ -233,7 +235,6 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         super().__init__()
 
 
-    # N.B. This is a very naive implementation.
     def compute_best_move(self, game_state: GameState) -> None:
         depth = 0
         while True:
@@ -244,7 +245,6 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
                 self.propose_move(random.choice(tree.get_possible_moves()))
             else:
                 self.propose_move(move)
-            # print(f'A1 DEPTH: {depth}')
             depth += 1
             
 
