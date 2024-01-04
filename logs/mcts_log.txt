@@ -1,0 +1,288 @@
+python play_match.py --first team12_A3_MCTS --second random_player --time 0.5 --board boards/empty-3x3.txt
+Playing game 1
+Score: 15 - 26
+Player 2 wins the game.
+team12_A3_MCTS - random_player 0-1
+
+Playing game 2
+Score: 26 - 18
+Player 1 wins the game.
+random_player - team12_A3_MCTS 1-0
+
+Playing game 3
+Score: 21 - 27
+Player 2 wins the game.
+team12_A3_MCTS - random_player 0-1
+
+Playing game 4
+Score: 33 - 17
+Player 1 wins the game.
+random_player - team12_A3_MCTS 1-0
+
+Playing game 5
+Score: 21 - 25
+Player 2 wins the game.
+team12_A3_MCTS - random_player 0-1
+
+Playing game 6
+Score: 23 - 24
+Player 2 wins the game.
+random_player - team12_A3_MCTS 0-1
+
+Match result: team12_A3_MCTS - random_player 1-5
+python play_match.py --first team12_A3_MCTS --second random_player --time 0.5 --board boards/empty-3x3.txt
+Playing game 1
+Score: 27 - 19
+Player 1 wins the game.
+team12_A3_MCTS - random_player 1-0
+
+Playing game 2
+Score: 12 - 36
+Player 2 wins the game.
+random_player - team12_A3_MCTS 0-1
+
+Playing game 3
+Score: 19 - 27
+Player 2 wins the game.
+team12_A3_MCTS - random_player 0-1
+
+Playing game 4
+Score: 16 - 37
+Player 2 wins the game.
+random_player - team12_A3_MCTS 0-1
+
+Playing game 5
+Score: 21 - 28
+Player 2 wins the game.
+team12_A3_MCTS - random_player 0-1
+
+Playing game 6
+Score: 21 - 18
+Player 1 wins the game.
+random_player - team12_A3_MCTS 1-0
+
+Match result: team12_A3_MCTS - random_player 3-3
+python play_match.py --first team12_A3_MCTS --second random_player --time 0.5 --board boards/empty-3x3.txt
+Playing game 1
+Score: 29 - 16
+Player 1 wins the game.
+team12_A3_MCTS - random_player 1-0
+
+Playing game 2
+Score: 14 - 34
+Player 2 wins the game.
+random_player - team12_A3_MCTS 0-1
+
+Playing game 3
+Score: 18 - 25
+Player 2 wins the game.
+team12_A3_MCTS - random_player 0-1
+
+Playing game 4
+Score: 26 - 25
+Player 1 wins the game.
+random_player - team12_A3_MCTS 1-0
+
+Playing game 5
+Score: 16 - 35
+Player 2 wins the game.
+team12_A3_MCTS - random_player 0-1
+
+Playing game 6
+Score: 20 - 20
+The game ends in a draw.
+random_player - team12_A3_MCTS 0.5-0.5
+
+Match result: team12_A3_MCTS - random_player 2.5-3.5
+python play_match.py --first team12_A3_MCTS --second greedy_player --time 0.5 --board boards/empty-3x3.txt
+Playing game 1
+Score: 12 - 25
+Player 2 wins the game.
+team12_A3_MCTS - greedy_player 0-1
+
+Playing game 2
+Score: 37 - 4
+Player 1 wins the game.
+greedy_player - team12_A3_MCTS 1-0
+
+Playing game 3
+Score: 10 - 34
+Player 2 wins the game.
+team12_A3_MCTS - greedy_player 0-1
+
+Playing game 4
+Score: 37 - 3
+Player 1 wins the game.
+greedy_player - team12_A3_MCTS 1-0
+
+Playing game 5
+Score: 11 - 25
+Player 2 wins the game.
+team12_A3_MCTS - greedy_player 0-1
+
+Playing game 6
+Score: 28 - 11
+Player 1 wins the game.
+greedy_player - team12_A3_MCTS 1-0
+
+Match result: team12_A3_MCTS - greedy_player 0-6
+python play_match.py --first team12_A3_MCTS --second greedy_player --time 0.5 --board boards/empty-3x3.txt
+Playing game 1
+Score: 11 - 26
+Player 2 wins the game.
+team12_A3_MCTS - greedy_player 0-1
+
+Playing game 2
+Score: 27 - 12
+Player 1 wins the game.
+greedy_player - team12_A3_MCTS 1-0
+
+Playing game 3
+Score: 9 - 28
+Player 2 wins the game.
+team12_A3_MCTS - greedy_player 0-1
+
+Playing game 4
+Score: 23 - 14
+Player 1 wins the game.
+greedy_player - team12_A3_MCTS 1-0
+
+Playing game 5
+Score: 13 - 24
+Player 2 wins the game.
+team12_A3_MCTS - greedy_player 0-1
+
+Playing game 6
+Score: 35 - 4
+Player 1 wins the game.
+greedy_player - team12_A3_MCTS 1-0
+
+Match result: team12_A3_MCTS - greedy_player 0-6
+python play_match.py --first team12_A3_MCTS --second greedy_player --time 0.5 --board boards/empty-3x3.txt
+Playing game 1
+Score: 4 - 38
+Player 2 wins the game.
+team12_A3_MCTS - greedy_player 0-1
+
+Playing game 2
+Score: 26 - 12
+Player 1 wins the game.
+greedy_player - team12_A3_MCTS 1-0
+
+Playing game 3
+Score: 11 - 30
+Player 2 wins the game.
+team12_A3_MCTS - greedy_player 0-1
+
+Playing game 4
+Score: 26 - 13
+Player 1 wins the game.
+greedy_player - team12_A3_MCTS 1-0
+
+Playing game 5
+Score: 11 - 30
+Player 2 wins the game.
+team12_A3_MCTS - greedy_player 0-1
+
+Playing game 6
+Score: 32 - 6
+Player 1 wins the game.
+greedy_player - team12_A3_MCTS 1-0
+
+Match result: team12_A3_MCTS - greedy_player 0-6
+python play_match.py --first team12_A3_MCTS --second team12_A2 --time 0.5 --board boards/empty-3x3.txt
+Playing game 1
+Score: 6 - 34
+Player 2 wins the game.
+team12_A3_MCTS - team12_A2 0-1
+
+Playing game 2
+Score: 34 - 4
+Player 1 wins the game.
+team12_A2 - team12_A3_MCTS 1-0
+
+Playing game 3
+Score: 13 - 26
+Player 2 wins the game.
+team12_A3_MCTS - team12_A2 0-1
+
+Playing game 4
+Score: 34 - 6
+Player 1 wins the game.
+team12_A2 - team12_A3_MCTS 1-0
+
+Playing game 5
+Score: 6 - 33
+Player 2 wins the game.
+team12_A3_MCTS - team12_A2 0-1
+
+Playing game 6
+Score: 32 - 6
+Player 1 wins the game.
+team12_A2 - team12_A3_MCTS 1-0
+
+Match result: team12_A3_MCTS - team12_A2 0-6
+python play_match.py --first team12_A3_MCTS --second team12_A2 --time 0.5 --board boards/empty-3x3.txt
+Playing game 1
+Score: 10 - 34
+Player 2 wins the game.
+team12_A3_MCTS - team12_A2 0-1
+
+Playing game 2
+Score: 32 - 7
+Player 1 wins the game.
+team12_A2 - team12_A3_MCTS 1-0
+
+Playing game 3
+Score: 10 - 28
+Player 2 wins the game.
+team12_A3_MCTS - team12_A2 0-1
+
+Playing game 4
+Score: 29 - 7
+Player 1 wins the game.
+team12_A2 - team12_A3_MCTS 1-0
+
+Playing game 5
+Score: 5 - 40
+Player 2 wins the game.
+team12_A3_MCTS - team12_A2 0-1
+
+Playing game 6
+Score: 34 - 6
+Player 1 wins the game.
+team12_A2 - team12_A3_MCTS 1-0
+
+Match result: team12_A3_MCTS - team12_A2 0-6
+python play_match.py --first team12_A3_MCTS --second team12_A2 --time 0.5 --board boards/empty-3x3.txt
+Playing game 1
+Score: 5 - 33
+Player 2 wins the game.
+team12_A3_MCTS - team12_A2 0-1
+
+Playing game 2
+Score: 30 - 16
+Player 1 wins the game.
+team12_A2 - team12_A3_MCTS 1-0
+
+Playing game 3
+Score: 5 - 34
+Player 2 wins the game.
+team12_A3_MCTS - team12_A2 0-1
+
+Playing game 4
+Score: 31 - 7
+Player 1 wins the game.
+team12_A2 - team12_A3_MCTS 1-0
+
+Playing game 5
+Score: 10 - 30
+Player 2 wins the game.
+team12_A3_MCTS - team12_A2 0-1
+
+Playing game 6
+Score: 28 - 9
+Player 1 wins the game.
+team12_A2 - team12_A3_MCTS 1-0
+
+Match result: team12_A3_MCTS - team12_A2 0-6
