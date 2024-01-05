@@ -35,7 +35,7 @@ with open(sys.argv[1], 'r') as f:
     depths, d_ind, scores, winner, board, time = reset()
 
     for line in lines:
-        match = re.match(r'.*python.* --time ([^ ]+).* --board ([^ ]+).*', line)        
+        match = re.match(r'.*python.* --time ([^ ]+).* --board ([^ ]+)\.txt.*', line)        
 
         if match is not None:
             time = match.group(1)

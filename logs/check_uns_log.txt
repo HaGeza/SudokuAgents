@@ -1,0 +1,442 @@
+python ./play_match.py --time 0.5 --board boards/empty-3x3.txt
+
+Playing game 1
+Score: 8 - 29
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 2
+Score: 12 - 29
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 3
+Score: 28 - 11
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 4
+Score: 18 - 25
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 5
+Score: 8 - 28
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 6
+Score: 11 - 26
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Match result: team12_A3_check_uns - team12_A3_finish_term_1 4-2
+Playing game 1
+Score: 25 - 13
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 2
+Score: 30 - 8
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 3
+Score: 23 - 13
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 4
+Score: 18 - 22
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 5
+Score: 8 - 30
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 6
+Score: 10 - 30
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Match result: team12_A3_check_uns - team12_A3_finish_term_1 4-2
+Playing game 1
+Score: 9 - 26
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 2
+Score: 30 - 6
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 3
+Score: 10 - 25
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 4
+Score: 31 - 8
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 5
+Score: 25 - 14
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 6
+Score: 28 - 7
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Match result: team12_A3_check_uns - team12_A3_finish_term_1 1-5
+Playing game 1
+Score: 10 - 28
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 2
+Score: 14 - 21
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 3
+Score: 5 - 32
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 4
+Score: 14 - 25
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 5
+Score: 8 - 28
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 6
+Score: 29 - 9
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Match result: team12_A3_check_uns - team12_A3_finish_term_1 2-4
+Playing game 1
+Score: 5 - 39
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 2
+Score: 12 - 23
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 3
+Score: 27 - 16
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 4
+Score: 11 - 30
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 5
+Score: 8 - 29
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 6
+Score: 28 - 12
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Match result: team12_A3_check_uns - team12_A3_finish_term_1 3-3
+python ./play_match.py --time 2.5 --board boards/empty-3x3.txt
+
+Playing game 1
+Score: 26 - 11
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 2
+Score: 12 - 25
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 3
+Score: 9 - 29
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 4
+Score: 9 - 29
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 5
+Score: 8 - 30
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 6
+Score: 11 - 27
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Match result: team12_A3_finish_term_1 - team12_A3_check_uns 4-2
+Playing game 1
+Score: 7 - 34
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 2
+Score: 9 - 30
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 3
+Score: 24 - 11
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 4
+Score: 12 - 26
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 5
+Score: 24 - 13
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 6
+Score: 9 - 29
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Match result: team12_A3_finish_term_1 - team12_A3_check_uns 5-1
+python ./play_match.py --time 0.5 --board boards/empty-4x4.txt
+
+Playing game 1
+Score: 39 - 25
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 2
+Score: 29 - 38
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 3
+Score: 14 - 52
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 4
+Score: 53 - 14
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 5
+Score: 16 - 51
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 6
+Score: 41 - 21
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Match result: team12_A3_check_uns - team12_A3_finish_term_1 2-4
+Playing game 1
+Score: 12 - 54
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 2
+Score: 26 - 41
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 3
+Score: 47 - 25
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 4
+Score: 52 - 13
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 5
+Score: 13 - 55
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 6
+Score: 26 - 38
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Match result: team12_A3_check_uns - team12_A3_finish_term_1 3-3
+Playing game 1
+Score: 38 - 26
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 2
+Score: 29 - 34
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 3
+Score: 37 - 28
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 4
+Score: 59 - 10
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 5
+Score: 10 - 63
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 6
+Score: 58 - 12
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Match result: team12_A3_check_uns - team12_A3_finish_term_1 3-3
+Playing game 1
+Score: 38 - 29
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 2
+Score: 27 - 37
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 3
+Score: 15 - 52
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 4
+Score: 59 - 13
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 5
+Score: 15 - 50
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 6
+Score: 23 - 45
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Match result: team12_A3_check_uns - team12_A3_finish_term_1 3-3
+Playing game 1
+Score: 55 - 17
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 2
+Score: 55 - 12
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 3
+Score: 15 - 53
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 4
+Score: 18 - 50
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 5
+Score: 49 - 22
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 6
+Score: 48 - 21
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Match result: team12_A3_check_uns - team12_A3_finish_term_1 3-3
+python ./play_match.py --time 2.5 --board boards/empty-4x4.txt
+
+Playing game 1
+Score: 27 - 43
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 2
+Score: 17 - 53
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 3
+Score: 20 - 51
+Player 2 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 0-1
+
+Playing game 4
+Score: 15 - 48
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 5
+Score: 52 - 17
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 6
+Score: 13 - 59
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Match result: team12_A3_finish_term_1 - team12_A3_check_uns 4-2
+Playing game 1
+Score: 54 - 14
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 2
+Score: 43 - 25
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 1-0
+
+Playing game 3
+Score: 56 - 17
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 4
+Score: 17 - 49
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Playing game 5
+Score: 53 - 14
+Player 1 wins the game.
+team12_A3_finish_term_1 - team12_A3_check_uns 1-0
+
+Playing game 6
+Score: 20 - 43
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3_finish_term_1 0-1
+
+Match result: team12_A3_finish_term_1 - team12_A3_check_uns 5-1
