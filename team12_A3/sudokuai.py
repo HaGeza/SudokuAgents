@@ -192,16 +192,26 @@ class GameTree:
 
 
     def _finish_term(self, maximizer) -> float:
-        # late_game_scaler * indicator
+        """
+        Get the finish term, based on the parity of number of empty cells left, and the current player.
+
+        @param maximizer: True if maximizing player, False if minimizing player
+        @return: the finish term
+        """
+
         return (1 - (self.empty_left / (self.gs.board.N**2))) * \
             (1 if self.empty_left % 2 == maximizer else -1)
 
     
     def _evaluate(self, maximizer: bool) -> float:
         """"
-        Evaluate the current game state.
+        Evaluate the current game state, based on:
+        - The scores accumulated by each player
+        - The penalty term gained by each player
+        - The finish term
 
-        Current implementation: difference between current player's score and opponent's score.
+        @param maximizer: True if maximizing player, False if minimizing player
+        @return: the evaluation score
         """
 
         current_player = self.gs.current_player() - 1

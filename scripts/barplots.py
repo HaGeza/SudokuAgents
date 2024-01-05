@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
-PLAYER_NAME_START = 'team12_A3_'
+PLAYER_NAME_START = 'team12_A3'
 OTHER_PLAYERS = ['random_player', 'greedy_player', 'team12_A2']
 CSV_DIR = 'csvs'
 
@@ -52,15 +52,15 @@ ORDERING.update({
 })
 
 colormap = sns.color_palette('Set2', 5)
-COLORS = dict(zip(['basic +\nfinish term', 'greedy', 'draw'], colormap[1:5]))
+COLORS = dict(zip(['basic', 'greedy', 'draw'], colormap[1:5]))
 DEF_COLOR = colormap[0]
 
-plt.rcParams.update({'font.size': 14})
+plt.rcParams.update({'font.size': 18})
 
 def rearrange_players(df):
     mask = df['player1'].str.startswith(PLAYER_NAME_START)
     df.loc[~mask, ['player1', 'player2']] = df.loc[~mask, ['player2', 'player1']].values
-    df['winner'] = np.where(df['winner'] == df['player1'], 'basic + f.t +\ntransposition\ntable', df['winner'])
+    df['winner'] = np.where(df['winner'] == df['player1'], 'basic +\nfinish term', df['winner'])
 
     for attr in ['player1', 'player2', 'winner']:
         df[attr] = df[attr].str.replace(PLAYER_NAME_START, '')
@@ -82,7 +82,7 @@ def create_barplots(df, name, xlabel='Agent Variant', show=True,
 
         # Sort section in bars
 
-        outcome_list = ['basic + f.t +\ntransposition\ntable', 'draw', 'basic +\nfinish term', 'greedy', 'random']
+        outcome_list = ['basic +\nfinish term', 'draw', 'greedy', 'basic', 'random']
         outcome_list = [outcome for outcome in outcome_list if outcome in winner_percentages.columns]
         winner_percentages = winner_percentages[outcome_list]
 
@@ -130,10 +130,10 @@ def create_barplots(df, name, xlabel='Agent Variant', show=True,
 # df['player2'] = 'fasz'
 # create_barplots(df, 'mcts', show=True, save=True, xlabel='Opponent')
 
-df = pd.read_csv(f'{CSV_DIR}/tt.csv')
-rearrange_players(df)
-df['player1'] = df['board']
-create_barplots(df, 'tt', show=True, save=True, xlabel='Board')
+# df = pd.read_csv(f'{CSV_DIR}/tt.csv')
+# rearrange_players(df)
+# df['player1'] = df['board']
+# create_barplots(df, 'tt', show=True, save=True, xlabel='Board')
 
 # for csv in ['np_penalty', 'taboo', 'sort_shuffle']:
 #     df = pd.read_csv(f'{CSV_DIR}/{csv}.csv')
@@ -141,12 +141,12 @@ create_barplots(df, 'tt', show=True, save=True, xlabel='Board')
 #     create_barplots(df, csv, show=False, save=True)
 
 
-# # Big CSV
-# df = pd.read_csv(f'{CSV_DIR}/perf_merged.csv')
-# rearrange_players(df)
+# Big CSV
+df = pd.read_csv(f'{CSV_DIR}/A3_perf.csv')
+rearrange_players(df)
 
-# df['player1'] = df['time']
-# df['player2'] = df.apply(lambda row: f'{row["player2"]}__{row["board"]}'.rsplit('.', 1)[0], axis=1)
+df['player1'] = df['time']
+df['player2'] = df.apply(lambda row: f'{row["player2"]}__{row["board"]}'.rsplit('.', 1)[0], axis=1)
 
 # for group, group_df in df.groupby(['player2']):
 
@@ -158,5 +158,5 @@ create_barplots(df, 'tt', show=True, save=True, xlabel='Board')
 # create_barplots(df, '', xlabel='Time', show=False, save=False,
 #                 figs=[fig_basic] * 5 + [fig_greedy] * 5, axs=axs_basic[:5] + axs_greedy[:5])
 
-# for group, group_df in df.groupby(['player2']):
-#     create_barplots(group_df, '', xlabel='Time', show=False, save=True, legend=False)
+for group, group_df in df.groupby(['player2']):
+    create_barplots(group_df, f'A3_perf_{group[0]}', xlabel='Time', show=False, save=True, legend=False)
