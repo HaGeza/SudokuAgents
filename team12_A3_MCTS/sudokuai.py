@@ -12,6 +12,15 @@ class EncodedGameState:
     pass
 
 class EncodedGameState:
+    """
+    Game state encoded into several tuples:
+    - player: 0 or 1, based on current player 
+    - parity: 0 or 1, based on the parity of number of empty cells
+    - reward: 0, 1, 3 or 7, based on the points awarded for the last move
+    - region_parity: 0, 1, 2, ..., 48, based on the parity of the number of
+      regions with odd number of empty cells
+    - missing: 0, 1, 2, ..., 256, based on the number of empty cells
+    """
     def __init__(self, player: int, parity: int, reward: int, region_parity: int, missing: int):
         self.player, self.parity, self.reward, self.region_parity, self.missing = \
              player, parity, reward, region_parity, missing
@@ -42,6 +51,12 @@ REWARDS = [
 
 class GameStateDict:
     def _get_key(self, gs: EncodedGameState) -> int:
+        """
+        Returns a unique key for the given game state.
+
+        @param gs: Encoded game state 
+        @return: Unique key
+        """
         key = 0
         for i, val in enumerate(gs):
             key = key * (self.resolutions[i] + 1) + val
@@ -63,14 +78,30 @@ class GameStateDict:
 
 
     def get(self, gs: EncodedGameState) -> [int, int]:
+        """
+        Get [n,q] tuple corresponding to the given game state. 
+
+        @param gs: Encoded game state
+        @return: [n,q] tuple
+        """
+
         return self.tt.get(self._get_key(gs), [0, 0])
 
 
 class GameStateEncoder:
+    """
+    Class for calculating new game states and encoding them into `EncodedGameState` objects.
+    """
+
     EPS = 1e-6
 
 
     def __init__(self, game_state: GameState, tt: dict = TRANSPOSITION_TABLE):
+        """
+        Construct encoder from the initial `GameState`, that moves will be applied to,
+        and a transposition table for getting the tuples values of `EncodedGameState` objects. 
+        """
+
         self.m = game_state.board.m
         self.n = game_state.board.n
         self.N = game_state.board.N
@@ -103,10 +134,23 @@ class GameStateEncoder:
 
 
     def _quick_check_unsolvable(self) -> bool:
+        """
+        Quickly check if the game state is unsolvable, by finding unsatisfiable cells.
+        This may return false negatives (actually unsolvable, not marked as one). 
+        """
+
         return np.any((np.sum(self.available, axis=2) + (self.board != 0)) == 0)
 
 
     def _apply_move(self, i: int, j: int, value: int):
+        """
+        Update the game state by applying a move. 
+
+        @param i: Row index
+        @param j: Column index
+        @param value: Value to put in cell (i,j)
+        """
+
         self.board[i, j] = value
 
         b_i, b_j = i // self.m, j // self.n
@@ -126,11 +170,24 @@ class GameStateEncoder:
 
 
     def _get_region_parity(self) -> int:
+        """
+        Get region_parity as defined in `EncodedGameState`. 
+
+        @return: Region parity
+        """        
+
         return int((np.sum(self.row_odd) + np.sum(self.col_odd) + np.sum(self.box_odd)) * \
                     self.gs_dict.region_parity_res / (self.N * 3))
 
 
     def get_legal_moves(self, permute: bool = True) -> [(int, int, int)]:
+        """
+        Get all legal moves for the current game state. 
+
+        @param permute: Whether to permute the order of the moves or not
+        @return: List of legal moves
+        """
+
         available_inds = np.argwhere(self.available) + [0, 0, 1]
         if permute:
             available_inds = np.random.permutation(available_inds)
@@ -138,6 +195,14 @@ class GameStateEncoder:
 
 
     def get_encoded_state_after_move(self, parent_gs: EncodedGameState, move: np.array) -> (list, bool):
+        """
+        Get the game state as a list, after applying a move.
+
+        @param parent_gs: Parent game state
+        @param move: Move to apply
+        @return: Encoded game state as a list, for retrieving [n,q] from the transposition table
+        """
+
         i, j, value = move        
 
         state = parent_gs.copy()
@@ -172,6 +237,13 @@ class GameStateEncoder:
 
 
     def get_score(self, gs: EncodedGameState) -> float:
+        """
+        Get the score for a given game state, based on the transposition table. 
+
+        @param gs: Encoded game state
+        @return: Score
+        """
+
         n, q = self.gs_dict.get(gs)
         return q / (n + GameStateEncoder.EPS)
 
