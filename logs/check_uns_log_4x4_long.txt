@@ -1,0 +1,62 @@
+Playing game 1
+Score: 27 - 43
+Player 2 wins the game.
+team12_A3 - team12_A3_check_uns 0-1
+
+Playing game 2
+Score: 17 - 53
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3 0-1
+
+Playing game 3
+Score: 20 - 51
+Player 2 wins the game.
+team12_A3 - team12_A3_check_uns 0-1
+
+Playing game 4
+Score: 15 - 48
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3 0-1
+
+Playing game 5
+Score: 52 - 17
+Player 1 wins the game.
+team12_A3 - team12_A3_check_uns 1-0
+
+Playing game 6
+Score: 13 - 59
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3 0-1
+
+Match result: team12_A3 - team12_A3_check_uns 4-2
+Playing game 1
+Score: 54 - 14
+Player 1 wins the game.
+team12_A3 - team12_A3_check_uns 1-0
+
+Playing game 2
+Score: 43 - 25
+Player 1 wins the game.
+team12_A3_check_uns - team12_A3 1-0
+
+Playing game 3
+Score: 56 - 17
+Player 1 wins the game.
+team12_A3 - team12_A3_check_uns 1-0
+
+Playing game 4
+Score: 17 - 49
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3 0-1
+
+Playing game 5
+Score: 53 - 14
+Player 1 wins the game.
+team12_A3 - team12_A3_check_uns 1-0
+
+Playing game 6
+Score: 20 - 43
+Player 2 wins the game.
+team12_A3_check_uns - team12_A3 0-1
+
+Match result: team12_A3 - team12_A3_check_uns 5-1

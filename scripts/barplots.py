@@ -4,53 +4,62 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
-PLAYER_NAME_START = 'team12_A2'
-OTHER_PLAYERS = ['greedy_player', 'team12_A1']
+PLAYER_NAME_START = 'team12_A3'
+OTHER_PLAYERS = ['greedy_player', 'team12_A2']
 CSV_DIR = 'csvs'
 
 REPLACE_DICT = {
     'greedy_player': 'greedy',
-    'team12_A1': 'basic',
-    '_np_and_penalty': 'np & penalty',
-    '_only_np': 'only np',
-    '_taboo_00': 'no detect,\nno finish',
-    '_taboo_01': 'no detect,\nfinish',
-    '_taboo_10': 'detect, no finish',
-    '_taboo_11': 'detect, finish',
-    '_sort_shuffle_00': 'no sort,\nno shuffle',
-    '_sort_shuffle_01': 'no sort,\nshuffle',
-    '_sort_shuffle_10': 'sort, no shuffle',
-    '_sort_shuffle_11': 'sort, shuffle',
-}
+    'team12_A2': 'basic',
+    # '_np_and_penalty': 'np & penalty',
+    # '_only_np': 'only np',
+    # '_taboo_00': 'no detect,\nno finish',
+    # '_taboo_01': 'no detect,\nfinish',
+    # '_taboo_10': 'detect, no finish',
+    # '_taboo_11': 'detect, finish',
+    # '_sort_shuffle_00': 'no sort,\nno shuffle',
+    # '_sort_shuffle_01': 'no sort,\nshuffle',
+    # '_sort_shuffle_10': 'sort, no shuffle',
+    # '_sort_shuffle_11': 'sort, shuffle',
+    '_finish_term_05': 'C=0.5',
+} 
+REPLACE_DICT.update({
+    f'_finish_term_{C}': f'C={C}' for C in [1, 2, 5, 10, 25, 100]
+})
 
 ORDERING = {
-    'np & penalty': 1,
-    'only np': 0,
-    'no taboo,\nno finish': 1,
-    'no taboo,\nfinish': 0,
-    'taboo, no finish': 3,
-    'taboo, finish': 2,
-    'no sort,\nno shuffle': 0,
-    'no sort,\nshuffle': 1,
-    'sort, no shuffle': 2,
-    'sort, shuffle': 3,
+    # 'np & penalty': 1,
+    # 'only np': 0,
+    # 'no taboo,\nno finish': 1,
+    # 'no taboo,\nfinish': 0,
+    # 'taboo, no finish': 3,
+    # 'taboo, finish': 2,
+    # 'no sort,\nno shuffle': 0,
+    # 'no sort,\nshuffle': 1,
+    # 'sort, no shuffle': 2,
+    # 'sort, shuffle': 3,
 }
+ORDERING.update({
+    f'C={C}': i for i, C in enumerate([0.5, 1, 2, 5, 10, 25, 100])
+})
 
 colormap = sns.color_palette('Set2', 4)
 COLORS = dict(zip(['basic', 'greedy', 'draw'], colormap[1:4]))
 DEF_COLOR = colormap[0]
 
+plt.rcParams.update({'font.size': 24})
+
 def rearrange_players(df):
     mask = df['player1'].str.startswith(PLAYER_NAME_START)
     df.loc[~mask, ['player1', 'player2']] = df.loc[~mask, ['player2', 'player1']].values
-    df['winner'] = np.where(df['winner'] == df['player1'], 'improved', df['winner'])
+    df['winner'] = np.where(df['winner'] == df['player1'], 'basic + finish term', df['winner'])
 
     for attr in ['player1', 'player2', 'winner']:
         df[attr] = df[attr].str.replace(PLAYER_NAME_START, '')
         df[attr] = df[attr].map(REPLACE_DICT).fillna(df[attr])
 
 
-def create_barplots(df, name, xlabel='Agent Variant', show=True, 
+def create_barplots(df, name, xlabel='Finish term C value', show=True, 
                     save=False, path='imgs', figs=[], axs=[], legend=True):
     p2_groups = df.groupby(['player2'])
 
@@ -64,7 +73,7 @@ def create_barplots(df, name, xlabel='Agent Variant', show=True,
         winner_percentages.drop('order', axis=1, inplace=True)
 
         # Sort section in bars
-        outcome_list = ['improved', 'draw', 'basic', 'greedy']
+        outcome_list = ['basic + finish term', 'draw', 'basic', 'greedy']
         outcome_list = [outcome for outcome in outcome_list if outcome in winner_percentages.columns]
         winner_percentages = winner_percentages[outcome_list]
 
@@ -73,7 +82,7 @@ def create_barplots(df, name, xlabel='Agent Variant', show=True,
         ])
 
         if len(figs) <= i:
-            fig, ax = plt.subplots(figsize=(8, 6))
+            fig, ax = plt.subplots(figsize=(24, 9))
         else:
             fig, ax = figs[i], axs[i]
 
@@ -96,19 +105,23 @@ def create_barplots(df, name, xlabel='Agent Variant', show=True,
         if show:
             plt.show()
 
-
-for csv in ['np_penalty', 'taboo', 'sort_shuffle']:
-    df = pd.read_csv(f'{CSV_DIR}/{csv}.csv')
-    rearrange_players(df)
-    create_barplots(df, csv, show=False, save=True)
-
-
-# Big CSV
-df = pd.read_csv(f'{CSV_DIR}/perf_merged.csv')
+df = pd.read_csv(f'{CSV_DIR}/finish_term.csv')
 rearrange_players(df)
+create_barplots(df, 'finish_term', show=False, save=True)
 
-df['player1'] = df['time']
-df['player2'] = df.apply(lambda row: f'{row["player2"]}__{row["board"]}'.rsplit('.', 1)[0], axis=1)
+
+# for csv in ['np_penalty', 'taboo', 'sort_shuffle']:
+#     df = pd.read_csv(f'{CSV_DIR}/{csv}.csv')
+#     rearrange_players(df)
+#     create_barplots(df, csv, show=False, save=True)
+
+
+# # Big CSV
+# df = pd.read_csv(f'{CSV_DIR}/perf_merged.csv')
+# rearrange_players(df)
+
+# df['player1'] = df['time']
+# df['player2'] = df.apply(lambda row: f'{row["player2"]}__{row["board"]}'.rsplit('.', 1)[0], axis=1)
 
 # for group, group_df in df.groupby(['player2']):
 
