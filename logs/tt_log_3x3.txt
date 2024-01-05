@@ -1,3 +1,5 @@
+python ./play_match.py --time 0.5 --board boards/empty-3x3.txt
+
 Playing game 1
 Number of proposals: 3
 Number of proposals: 3

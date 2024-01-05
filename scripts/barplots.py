@@ -4,13 +4,15 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
-PLAYER_NAME_START = 'team12_A3_check'
-OTHER_PLAYERS = ['greedy_player', 'team12_A2']
+PLAYER_NAME_START = 'team12_A3_'
+OTHER_PLAYERS = ['random_player', 'greedy_player', 'team12_A2']
 CSV_DIR = 'csvs'
 
 REPLACE_DICT = {
+    'random_player': 'random',
     'greedy_player': 'greedy',
     'team12_A2': 'basic',
+    'team12_A3': 'basic +\nfinish term',
     # '_np_and_penalty': 'np & penalty',
     # '_only_np': 'only np',
     # '_taboo_00': 'no detect,\nno finish',
@@ -22,11 +24,13 @@ REPLACE_DICT = {
     # '_sort_shuffle_10': 'sort, no shuffle',
     # '_sort_shuffle_11': 'sort, shuffle',
     '_finish_term_05': 'C=0.5',
+    'mcts': 'MCTS',
+    'tt': 'basic + f.t +\ntransposition\ntable',
 } 
 REPLACE_DICT.update({
     f'_finish_term_{C}': f'C={C}' for C in [1, 2, 5, 10, 25, 100]
 })
-REPLACE_DICT['team12_A3_finish_term_1'] = 'basic +\nfinish term'
+REPLACE_DICT['team12_A3_finish_term_1'] = 'basic'
 
 ORDERING = {
     # 'np & penalty': 1,
@@ -39,13 +43,16 @@ ORDERING = {
     # 'no sort,\nshuffle': 1,
     # 'sort, no shuffle': 2,
     # 'sort, shuffle': 3,
+    'random': 0,
+    'greedy': 1,
+    'basic': 2,
 }
 ORDERING.update({
     f'C={C}': i for i, C in enumerate([0.5, 1, 2, 5, 10, 25, 100])
 })
 
-colormap = sns.color_palette('Set2', 4)
-COLORS = dict(zip(['basic +\nfinish term', 'greedy', 'draw'], colormap[1:4]))
+colormap = sns.color_palette('Set2', 5)
+COLORS = dict(zip(['basic +\nfinish term', 'greedy', 'draw'], colormap[1:5]))
 DEF_COLOR = colormap[0]
 
 plt.rcParams.update({'font.size': 14})
@@ -53,7 +60,7 @@ plt.rcParams.update({'font.size': 14})
 def rearrange_players(df):
     mask = df['player1'].str.startswith(PLAYER_NAME_START)
     df.loc[~mask, ['player1', 'player2']] = df.loc[~mask, ['player2', 'player1']].values
-    df['winner'] = np.where(df['winner'] == df['player1'], 'basic + f.t. +\ndetect more\nunsolvables', df['winner'])
+    df['winner'] = np.where(df['winner'] == df['player1'], 'basic + f.t +\ntransposition\ntable', df['winner'])
 
     for attr in ['player1', 'player2', 'winner']:
         df[attr] = df[attr].str.replace(PLAYER_NAME_START, '')
@@ -74,7 +81,8 @@ def create_barplots(df, name, xlabel='Agent Variant', show=True,
         winner_percentages.drop('order', axis=1, inplace=True)
 
         # Sort section in bars
-        outcome_list = ['basic + f.t. +\ndetect more\nunsolvables', 'draw', 'basic +\nfinish term', 'greedy']
+
+        outcome_list = ['basic + f.t +\ntransposition\ntable', 'draw', 'basic +\nfinish term', 'greedy', 'random']
         outcome_list = [outcome for outcome in outcome_list if outcome in winner_percentages.columns]
         winner_percentages = winner_percentages[outcome_list]
 
@@ -110,11 +118,22 @@ def create_barplots(df, name, xlabel='Agent Variant', show=True,
 # rearrange_players(df)
 # create_barplots(df, 'finish_term', show=False, save=True)
 
-df = pd.read_csv(f'{CSV_DIR}/check_uns.csv')
+# df = pd.read_csv(f'{CSV_DIR}/check_uns.csv')
+# rearrange_players(df)
+# df['player1'] = df['time']
+# for (board, group) in df.groupby(['board']):
+#     create_barplots(group, f'check_uns_{board[0]}', show=True, save=True, xlabel='Time', legend=False)
+
+# df = pd.read_csv(f'{CSV_DIR}/mcts.csv')
+# rearrange_players(df)
+# df['player1'] = df['player2']
+# df['player2'] = 'fasz'
+# create_barplots(df, 'mcts', show=True, save=True, xlabel='Opponent')
+
+df = pd.read_csv(f'{CSV_DIR}/tt.csv')
 rearrange_players(df)
-df['player1'] = df['time']
-for (board, group) in df.groupby(['board']):
-    create_barplots(group, f'check_uns_{board[0]}', show=True, save=True, xlabel='Time', legend=False)
+df['player1'] = df['board']
+create_barplots(df, 'tt', show=True, save=True, xlabel='Board')
 
 # for csv in ['np_penalty', 'taboo', 'sort_shuffle']:
 #     df = pd.read_csv(f'{CSV_DIR}/{csv}.csv')
