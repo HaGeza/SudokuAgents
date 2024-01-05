@@ -145,16 +145,24 @@ class GameTree:
 
     def _quick_check_unsolvable(self) -> bool:
         """
-        Check if the current game state is a taboo state. Taboo states have at
-        least one empty cell, where no legal move is possible.
+        Quickly check if the game state is unsolvable, by finding unsatisfiable cells.
+        This may return false negatives (actually unsolvable, not marked as one). 
 
-        @return: `True` if the current game state is a taboo state, `False` otherwise
+        @return: `True` if unsolvable game state detected, `False` otherwise
         """        
 
         return np.any((np.sum(self.available, axis=2) + (self.board != SudokuBoard.empty)) == 0)
 
     
     def _unsolvable_region(self, available: np.ndarray) -> bool:
+        """
+        Check if the given region is unsolvable, based on the cardinality of the
+        union, of available values of empty cells in the region. This may return false negatives.
+
+        @param available: the available values for the region, as a KxN np.array
+        @return: `True` if unsolvable game state detected, `False` otherwise
+        """
+
         prev_limit = -1
         limit = available.shape[0]
 
@@ -169,6 +177,12 @@ class GameTree:
 
 
     def _check_unsolvable(self) -> bool:
+        """
+        Check if any region is unsolvable, based on `_unsolvable_region`.
+        This may return false negatives.
+
+        @return: `True` if unsolvable game state detected, `False` otherwise
+        """
         for i in range(self.gs.board.N):
             board_row = self.board[i, :]
             available_row = self.available[i, :, :]
@@ -228,11 +242,16 @@ class GameTree:
         return gt
 
 
-    # Test various C values [1, 5, 10, 25, 100]
     def _finish_term(self, maximizer) -> float:
-        # late_game_scaler * indicator
+        """
+        Get the finish term, based on the parity of number of empty cells left, and the current player.
+
+        @param maximizer: True if maximizing player, False if minimizing player
+        @return: the finish term
+        """
+
         return (1 - (self.empty_left / (self.gs.board.N**2))) * \
-               (1 if self.empty_left % 2 == maximizer else -1)
+            (1 if self.empty_left % 2 == maximizer else -1)
 
     
     def _evaluate(self, maximizer: bool) -> float:

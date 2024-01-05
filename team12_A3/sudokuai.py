@@ -143,12 +143,12 @@ class GameTree:
         self.h_scores[score_ind] += reward
 
 
-    def _is_taboo_state(self) -> bool:
+    def _quick_check_unsolvable(self) -> bool:
         """
-        Check if the current game state is a taboo state. Taboo states have at
-        least one empty cell, where no legal move is possible.
+        Quickly check if the game state is unsolvable, by finding unsatisfiable cells.
+        This may return false negatives (actually unsolvable, not marked as one). 
 
-        @return: `True` if the current game state is a taboo state, `False` otherwise
+        @return: `True` if unsolvable game state detected, `False` otherwise
         """        
 
         return np.any((np.sum(self.available, axis=2) + (self.board != SudokuBoard.empty)) == 0)
@@ -171,7 +171,7 @@ class GameTree:
         gt.board[move.i, move.j] = move.value
         gt._update_available(move.i, move.j)
 
-        if gt._is_taboo_state():
+        if gt._quick_check_unsolvable():
             gt = self._copy()
             gt.available[move.i, move.j, move.value - 1] = False
             return gt

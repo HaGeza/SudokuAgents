@@ -137,6 +137,8 @@ class GameStateEncoder:
         """
         Quickly check if the game state is unsolvable, by finding unsatisfiable cells.
         This may return false negatives (actually unsolvable, not marked as one). 
+
+        @return: `True` if unsolvable game state detected, `False` otherwise
         """
 
         return np.any((np.sum(self.available, axis=2) + (self.board != 0)) == 0)
