@@ -150,16 +150,27 @@ class GameTree:
 
     def _quick_check_unsolvable(self) -> bool:
         """
-        Check if the current game state is unsolvable, by checking if there is
-        at least one empty cell, where no move is available.
+        Quickly check if the game state is unsolvable, by finding unsatisfiable cells.
+        This may return false negatives (actually unsolvable, not marked as one). 
 
-        @return: `True` if the current game state is a taboo state, `False` otherwise
+        @return: `True` if unsolvable game state detected, `False` otherwise
         """        
 
         return np.any((np.sum(self.available, axis=2) + (self.board != SudokuBoard.empty)) == 0)
 
 
     def _get_tt_score(self, player: int, parity: int, reward: int, region_parity: int, missing: int) -> float:
+        """
+        Get score of the game state identified by the parameters, from `TRANSPOSITION_TABLE`.
+
+        @param player: current player
+        @param parity: parity of empty cells left
+        @param reward: reward obtained for the last move
+        @param region_parity: (scaled) sum of parities of number of missing elements in the regions
+        @param missing: (scaled) number of empty cells left
+        @return score of the game state
+        """
+
         key = ((((player << 1) + parity) << 2 + reward) * 49 + region_parity) * 257 + missing
         p, q = TRANSPOSITION_TABLE.get(key, [0, 0])
         return q / (p + 1e-6)
