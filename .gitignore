@@ -6,3 +6,5 @@ game_output*
 bin
 imgs
 .DS_Store
+target
+Cargo.lock

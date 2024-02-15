@@ -6,12 +6,15 @@ from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
 import numpy as np
 
+
 # Needed for recursion
-class GameTree: pass
+class GameTree:
+    pass
+
 
 class GameTree:
     """
-    Game tree for Competitive Sudoku. 
+    Game tree for Competitive Sudoku.
     """
 
     """
@@ -25,10 +28,11 @@ class GameTree:
         [
             [0, 1],
             [1, 3],
-        ],[
+        ],
+        [
             [1, 3],
             [3, 7],
-        ]
+        ],
     ]
 
     """
@@ -39,16 +43,16 @@ class GameTree:
         [
             [0, 1],
             [1, 2],
-        ],[
+        ],
+        [
             [1, 3],
             [3, 5],
-        ]
+        ],
     ]
-
 
     def _get_block_boundaries(self, i: int, j: int) -> (int, int, int, int):
         """
-        Get the boundaries of the block where the cell (i,j) is located. 
+        Get the boundaries of the block where the cell (i,j) is located.
 
         @param i: row index
         @param j: column index
@@ -60,7 +64,6 @@ class GameTree:
         block_i = i // m
         block_j = j // n
         return ((block_i * m), ((block_i + 1) * m), (block_j * n), ((block_j + 1) * n))
-
 
     def _update_available(self, i: int, j: int) -> None:
         """
@@ -84,11 +87,17 @@ class GameTree:
         # value cannot be put into the block of (i,j) anymore
         self.available[top:bottom, left:right, value - 1] = False
 
-
-    def __init__(self, gs: GameState, h_scores: [int], board: np.array,
-                 available: np.array, empty_left: int, finished: [bool] = [False]):
+    def __init__(
+        self,
+        gs: GameState,
+        h_scores: list,
+        board: np.array,
+        available: np.array,
+        empty_left: int,
+        finished: list = [False],
+    ):
         """
-        Initialize the game tree. 
+        Initialize the game tree.
 
         @param gs: the GameState object
         @param h_scores: heuristic scores for the two players
@@ -96,7 +105,7 @@ class GameTree:
         @param available: the available values for each cell as an np.array
         @param empty_left: the number of empty cells remaining
         @param finished: indicator for whether the game tree is finished
-        """                 
+        """
 
         self.gs = gs
         self.h_scores = h_scores
@@ -105,32 +114,35 @@ class GameTree:
         self.empty_left = empty_left
         self.finished = finished
 
-
     def _copy(self) -> GameTree:
         """
         Copy the game tree. Every element is copied, except for the game state.
 
         @return: copy of self
         """
-        
-        return GameTree(self.gs, self.h_scores.copy(), self.board.copy(),
-                        self.available.copy(), self.empty_left, self.finished)
 
+        return GameTree(
+            self.gs,
+            self.h_scores.copy(),
+            self.board.copy(),
+            self.available.copy(),
+            self.empty_left,
+            self.finished,
+        )
 
     def _get_block(self, i: int, j: int) -> np.array:
         """
         Get the elements in the block where the cell (i,j) is located.
 
         @param i: row index
-        @param j: column index 
+        @param j: column index
         @return: np.array containing block elements
         """
 
         top, bottom, left, right = self._get_block_boundaries(i, j)
         return self.board[top:bottom, left:right]
 
-
-    def _update_score(self, reward: float, maximizer: bool) -> None:    
+    def _update_score(self, reward: float, maximizer: bool) -> None:
         """
         Add reward to the score of the relevant player.
 
@@ -142,17 +154,17 @@ class GameTree:
         score_ind = current_player if maximizer else 1 - current_player
         self.h_scores[score_ind] += reward
 
-
     def _is_taboo_state(self) -> bool:
         """
         Check if the current game state is a taboo state. Taboo states have at
         least one empty cell, where no legal move is possible.
 
         @return: `True` if the current game state is a taboo state, `False` otherwise
-        """        
+        """
 
-        return np.any((np.sum(self.available, axis=2) + (self.board != SudokuBoard.empty)) == 0)
-
+        return np.any(
+            (np.sum(self.available, axis=2) + (self.board != SudokuBoard.empty)) == 0
+        )
 
     def _apply_move(self, move: Move, maximizer: bool, last_depth: bool) -> GameTree:
         """
@@ -184,47 +196,51 @@ class GameTree:
 
         # Filling in a region gives reward. Leaving a region with just one empty cell
         # gives penalty, IF AND ONLY IF the tree will not be expanded further.
-        reward = self.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0] - \
-                last_depth * self.PENALTY[row_cnt == 1][col_cnt == 1][box_cnt == 1]
-        gt._update_score(reward, maximizer)        
+        reward = (
+            self.REWARDS[row_cnt == 0][col_cnt == 0][box_cnt == 0]
+            - last_depth * self.PENALTY[row_cnt == 1][col_cnt == 1][box_cnt == 1]
+        )
+        gt._update_score(reward, maximizer)
 
         return gt
-
 
     # Test various C values [1, 5, 10, 25, 100]
     def _finish_term(self, maximizer, C=1) -> float:
         # constant_multiplier * late_game_scaler * indicator
-        return C * (1 - (self.empty_left / (self.gs.board.N**2))) * \
-            (1 if self.empty_left % 2 == maximizer else -1)
+        return (
+            C
+            * (1 - (self.empty_left / (self.gs.board.N**2)))
+            * (1 if self.empty_left % 2 == maximizer else -1)
+        )
 
-    
     def _evaluate(self, maximizer: bool) -> float:
-        """"
+        """ "
         Evaluate the current game state.
 
         Current implementation: difference between current player's score and opponent's score.
         """
 
         current_player = self.gs.current_player() - 1
-        return self.h_scores[current_player] - self.h_scores[1 - current_player] + \
-               self._finish_term(maximizer)
-
+        return (
+            self.h_scores[current_player]
+            - self.h_scores[1 - current_player]
+            + self._finish_term(maximizer)
+        )
 
     VALUE_FILTER = {
-        'available_le': 2,
-        'min_keep': 0.3,
+        "available_le": 2,
+        "min_keep": 0.3,
     }
-    
 
     def _get_possible_moves(self) -> [Move]:
         """
-        Get all possible moves for the current game state. 
+        Get all possible moves for the current game state.
 
         @return: list of possible moves
         """
 
         available_inds = np.argwhere(self.available) + [0, 0, 1]
-        if available_inds.shape[0] == 0:        
+        if available_inds.shape[0] == 0:
             return []
 
         available_inds = np.random.permutation(available_inds)
@@ -236,17 +252,18 @@ class GameTree:
         ordering = np.argsort(values_available)
         available_inds = available_inds[ordering]
         # Determine the number of indices to keep
-        length_to_keep = max(np.count_nonzero(values_available <= self.VALUE_FILTER['available_le']),
-                             int(self.VALUE_FILTER['min_keep'] * available_inds.shape[0]))
+        length_to_keep = max(
+            np.count_nonzero(values_available <= self.VALUE_FILTER["available_le"]),
+            int(self.VALUE_FILTER["min_keep"] * available_inds.shape[0]),
+        )
         # Keep only a portion of available indices
         available_inds = available_inds[:length_to_keep]
 
         return [Move(*inds) for inds in available_inds]
 
-
     def from_game_state(game_state: GameState) -> GameTree:
         """
-        Initialize the game tree from the given game state. 
+        Initialize the game tree from the given game state.
 
         @param game_state: the GameState object
         @return: the GameTree object
@@ -263,17 +280,18 @@ class GameTree:
                 gt.board[i, j] = game_state.board.get(i, j)
                 gt._update_available(i, j)
 
-        for taboo_move in game_state.taboo_moves:        
+        for taboo_move in game_state.taboo_moves:
             gt.available[taboo_move.i, taboo_move.j, taboo_move.value - 1] = False
 
         gt.empty_left = np.sum(board == SudokuBoard.empty)
 
         return gt
 
-
-    def minimax(self, depth: int, maximizer: bool, alpha: float, beta: float) -> (float, Move):
+    def minimax(
+        self, depth: int, maximizer: bool, alpha: float, beta: float
+    ) -> (float, Move):
         """
-        Minimax algorithm with alpha-beta pruning. 
+        Minimax algorithm with alpha-beta pruning.
 
         @param depth: remaining depth of minimax algorithm
         @param maximizer: True if maximizing player, False if minimizing player
@@ -289,13 +307,14 @@ class GameTree:
         if len(all_moves) == 0:
             return (self._evaluate(maximizer), None)
 
-        best_score = float('-inf') if maximizer else float('inf')
+        best_score = float("-inf") if maximizer else float("inf")
         best_move = None
 
         if maximizer:
             for move in all_moves:
                 score, _ = self._apply_move(move, True, depth == 1).minimax(
-                                                        depth - 1, False, alpha, beta)
+                    depth - 1, False, alpha, beta
+                )
 
                 if score > best_score:
                     best_score = score
@@ -307,7 +326,8 @@ class GameTree:
         else:
             for move in all_moves:
                 score, _ = self._apply_move(move, False, depth == 1).minimax(
-                                                        depth - 1, True, alpha, beta)
+                    depth - 1, True, alpha, beta
+                )
 
                 if score < best_score:
                     best_score = score
@@ -319,10 +339,9 @@ class GameTree:
 
         return best_score, best_move
 
-
     def get_first_possible_move(self) -> Move:
         """
-        Get the first possible move for the current game state. 
+        Get the first possible move for the current game state.
         """
 
         return Move(*(np.argwhere(self.available)[0] + [0, 0, 1]))
@@ -344,8 +363,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
 
         depth = 1
         while not tree.finished[0]:
-            tree.finished[0] = True            
-            _, move = tree.minimax(depth, True, float('-inf'), float('inf'))
+            tree.finished[0] = True
+            _, move = tree.minimax(depth, True, float("-inf"), float("inf"))
 
             # Safety check
             if move is not None:
