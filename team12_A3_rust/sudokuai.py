@@ -3,6 +3,7 @@ import competitive_sudoku.sudokuai
 
 import rsudokuai
 
+
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
     """
     Sudoku AI that computes a move for a given sudoku configuration.
@@ -12,14 +13,26 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         super().__init__()
 
     def compute_best_move(self, game_state: GameState) -> None:
-        taboo_tuples = [(m.i, m.j, m.value) for m in game_state.taboo_moves]        
+        taboo_tuples = [(m.i, m.j, m.value) for m in game_state.taboo_moves]
 
-        i, j, value = rsudokuai.compute_best_move(
+        tree = rsudokuai.GameTree(
             game_state.board.squares,
+            taboo_tuples,
             game_state.board.m,
             game_state.board.n,
             game_state.current_player(),
-            taboo_tuples,
         )
 
-        self.propose_move(Move(i, j, value))
+        first_possible = tree.get_first_possible_move()
+        self.propose_move(Move(*first_possible))
+
+        depth = 1
+        while True:
+            # tree.finished = True;
+            _, move = tree.minimax(
+                depth, True, float("-inf"), float("inf"))
+
+            if move is not None:
+                self.propose_move(Move(*move))
+
+            depth += 1

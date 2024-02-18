@@ -19,9 +19,11 @@ from competitive_sudoku.execute import solve_sudoku
 from competitive_sudoku.sudoku import GameState, SudokuBoard, Move, TabooMove, load_sudoku_from_text
 from competitive_sudoku.sudokuai import SudokuAI
 
-SUDOKU_SOLVER = 'bin\\solve_sudoku.exe' if platform.system() == 'Windows' else 'bin/solve_sudoku'
+SUDOKU_SOLVER = 'bin\\solve_sudoku.exe' if platform.system(
+) == 'Windows' else 'bin/solve_sudoku'
 
 GameResult = Tuple[float, float]
+
 
 def check_oracle() -> None:
     board_text = '''2 2
@@ -58,7 +60,8 @@ def simulate_game(initial_board: SudokuBoard,
         if force or verbose:
             print(text)
 
-    game_state = GameState(initial_board, copy.deepcopy(initial_board), [], [], [0, 0])
+    game_state = GameState(initial_board, copy.deepcopy(
+        initial_board), [], [], [0, 0])
     move_number = 0
     number_of_moves = initial_board.squares.count(SudokuBoard.empty)
     log('Initial state')
@@ -79,14 +82,17 @@ def simulate_game(initial_board: SudokuBoard,
         player2.num_prop = manager.Value('i', 0)
 
         while move_number < number_of_moves:
-            player, player_number = (player1, 1) if len(game_state.moves) % 2 == 0 else (player2, 2)
-            log(f'-----------------------------\nCalculate a move for player {player_number}')
+            player, player_number = (player1, 1) if len(
+                game_state.moves) % 2 == 0 else (player2, 2)
+            log(
+                f'-----------------------------\nCalculate a move for player {player_number}')
             player.best_move[0] = 0
             player.best_move[1] = 0
             player.best_move[2] = 0
             player.num_prop.value = 0
             try:
-                process = multiprocessing.Process(target=player.compute_best_move, args=(game_state,))
+                process = multiprocessing.Process(
+                    target=player.compute_best_move, args=(game_state,))
                 process.start()
                 time.sleep(calculation_time)
                 lock.acquire()
@@ -97,23 +103,28 @@ def simulate_game(initial_board: SudokuBoard,
             i, j, value = player.best_move
             best_move = Move(i, j, value)
             log(f'Best move: {best_move}')
-            # log(f'Number of proposals: {player.num_prop.value}', force=True)
+            log(
+                f'Number of proposals by {player_number}: {player.num_prop.value}', force=True)
             player_score = 0
             if best_move != Move(0, 0, 0):
                 if TabooMove(i, j, value) in game_state.taboo_moves:
-                    print(f'Error: {best_move} is a taboo move. Player {3-player_number} wins the game.')
+                    print(
+                        f'Error: {best_move} is a taboo move. Player {3-player_number} wins the game.')
                     return (0, 1) if player_number == 1 else (1, 0)
                 board_text = str(game_state.board)
                 options = f'--move "{game_state.board.rc2f(i, j)} {value}"'
                 output = solve_sudoku(SUDOKU_SOLVER, board_text, options)
                 if 'Invalid move' in output:
-                    print(f'Error: {best_move} is not a valid move. Player {3-player_number} wins the game.')
+                    print(
+                        f'Error: {best_move} is not a valid move. Player {3-player_number} wins the game.')
                     return (0, 1) if player_number == 1 else (1, 0)
                 if 'Illegal move' in output:
-                    print(f'Error: {best_move} is not a legal move. Player {3-player_number} wins the game.')
+                    print(
+                        f'Error: {best_move} is not a legal move. Player {3-player_number} wins the game.')
                     return (0, 1) if player_number == 1 else (1, 0)
                 if 'has no solution' in output:
-                    log(f'The sudoku has no solution after the move {best_move}.')
+                    log(
+                        f'The sudoku has no solution after the move {best_move}.')
                     player_score = 0
                     game_state.moves.append(TabooMove(i, j, value))
                     game_state.taboo_moves.append(TabooMove(i, j, value))
@@ -125,11 +136,14 @@ def simulate_game(initial_board: SudokuBoard,
                         game_state.moves.append(best_move)
                         move_number = move_number + 1
                     else:
-                        raise RuntimeError(f'Unexpected output of sudoku solver: "{output}".')
+                        raise RuntimeError(
+                            f'Unexpected output of sudoku solver: "{output}".')
             else:
-                print(f'No move was supplied. Player {3-player_number} wins the game.')
+                print(
+                    f'No move was supplied. Player {3-player_number} wins the game.')
                 return (0, 1) if player_number == 1 else (1, 0)
-            game_state.scores[player_number-1] = game_state.scores[player_number-1] + player_score
+            game_state.scores[player_number -
+                              1] = game_state.scores[player_number-1] + player_score
             log(f'Reward: {player_score}')
             log(game_state)
         if not verbose:
@@ -185,20 +199,29 @@ def play_game(board_file: Optional[str], name1: str, name2: str, calculation_tim
 
     return simulate_game(board, player1, player2, calculation_time=calculation_time, verbose=verbose)
 
+
 def main():
-    cmdline_parser = argparse.ArgumentParser(description='Script for simulating a competitive sudoku game.')
-    cmdline_parser.add_argument('--first', help="the module name of the first player's SudokuAI class (default: random_player)", default='random_player')
-    cmdline_parser.add_argument('--second', help="the module name of the second player's SudokuAI class (default: random_player)", default='random_player')
-    cmdline_parser.add_argument('--time', help="the time (in seconds) for computing a move (default: 0.5)", type=float, default=0.5)
-    cmdline_parser.add_argument('--check', help="check if the solve_sudoku program works", action='store_true')
-    cmdline_parser.add_argument('--board', metavar='FILE', type=str, help='a text file containing the start position')
-    cmdline_parser.add_argument('--quiet', help='print minimal output', action='store_true')
+    cmdline_parser = argparse.ArgumentParser(
+        description='Script for simulating a competitive sudoku game.')
+    cmdline_parser.add_argument(
+        '--first', help="the module name of the first player's SudokuAI class (default: random_player)", default='random_player')
+    cmdline_parser.add_argument(
+        '--second', help="the module name of the second player's SudokuAI class (default: random_player)", default='random_player')
+    cmdline_parser.add_argument(
+        '--time', help="the time (in seconds) for computing a move (default: 0.5)", type=float, default=0.5)
+    cmdline_parser.add_argument(
+        '--check', help="check if the solve_sudoku program works", action='store_true')
+    cmdline_parser.add_argument(
+        '--board', metavar='FILE', type=str, help='a text file containing the start position')
+    cmdline_parser.add_argument(
+        '--quiet', help='print minimal output', action='store_true')
     args = cmdline_parser.parse_args()
 
     if args.check:
         check_oracle()
     else:
-        play_game(args.board, args.first, args.second, args.time, verbose = not args.quiet)
+        play_game(args.board, args.first, args.second,
+                  args.time, verbose=not args.quiet)
 
 
 if __name__ == '__main__':

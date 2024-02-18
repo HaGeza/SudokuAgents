@@ -181,9 +181,6 @@ class GameTree:
 
         gt = self._copy()
 
-        # if gt.h_scores[0] > 0 or gt.h_scores[1] > 0:
-        #     print(f'Py: {gt.h_scores}')
-
         gt.board[move.i, move.j] = move.value
         gt._update_available(move.i, move.j)
 
@@ -370,11 +367,12 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         self.propose_move(first_possible)
 
         depth = 1
-        # while not tree.finished[0]:
-        while True:
+        while not tree.finished[0]:
             tree.finished[0] = True
-            _, move = tree.minimax(
+            score, move = tree.minimax(
                 depth, True, float("-inf"), float("inf"))
+            if depth < 5:
+                print(f'py: {score}')
 
             # Safety check
             if move is not None:

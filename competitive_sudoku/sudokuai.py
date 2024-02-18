@@ -44,6 +44,8 @@ class SudokuAI(object):
         self.best_move[1] = j
         self.best_move[2] = value
         self.num_prop.value += 1
+        # if self.num_prop.value < 5:
+        #     print(self.best_move)
         if self.lock:
             self.lock.release()
 
