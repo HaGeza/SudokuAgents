@@ -2,6 +2,7 @@ from competitive_sudoku.sudoku import GameState, Move, SudokuBoard, TabooMove
 import competitive_sudoku.sudokuai
 
 import rsudokuai
+import os
 
 
 class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
@@ -13,6 +14,8 @@ class SudokuAI(competitive_sudoku.sudokuai.SudokuAI):
         super().__init__()
 
     def compute_best_move(self, game_state: GameState) -> None:
+        pid = os.getpid()
+
         taboo_tuples = [(m.i, m.j, m.value) for m in game_state.taboo_moves]
 
         tree = rsudokuai.GameTree(
