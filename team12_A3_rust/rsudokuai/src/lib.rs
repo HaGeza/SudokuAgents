@@ -87,6 +87,7 @@ impl GameTree {
         let mut available_inds: Vec<(usize, usize, usize)> = self
             .available
             .indexed_iter()
+            // .par_bridge()
             .filter(|(_, &val)| val)
             .map(|((i, j, val), _)| (i, j, val + 1))
             .collect();
@@ -263,8 +264,8 @@ impl GameTree {
         };
         let mut best_move = None;
 
-        // let mut new_alpha = alpha.clone();
-        // let mut new_beta = beta.clone();
+        let mut new_alpha = alpha.clone();
+        let mut new_beta = beta.clone();
 
         if maximizer {
             for (i, j, val) in all_moves {
@@ -280,10 +281,10 @@ impl GameTree {
                     best_move = Some((i, j, val));
                 }
 
-                // new_alpha = f32::max(new_alpha, best_score);
-                // if new_alpha >= new_beta {
-                //     break;
-                // }
+                new_alpha = f32::max(new_alpha, best_score);
+                if new_alpha >= new_beta {
+                    break;
+                }
             }
         } else {
             for (i, j, val) in all_moves {
@@ -299,10 +300,10 @@ impl GameTree {
                     best_move = Some((i, j, val));
                 }
 
-                // new_beta = f32::min(new_beta, best_score);
-                // if new_alpha >= new_beta {
-                //     break;
-                // }
+                new_beta = f32::min(new_beta, best_score);
+                if new_alpha >= new_beta {
+                    break;
+                }
             }
         }
 
