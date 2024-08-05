@@ -1,0 +1,21 @@
+name: Update README with GHCPR
+
+on:
+  workflow_dispatch
+
+permissions:
+  contents: write
+
+jobs:
+  update_readme:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Update README with GHCPR
+      uses: HaGeza/GHCPR@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
