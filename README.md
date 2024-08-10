@@ -1,11 +1,25 @@
-Competitive sudoku
-==================
+# Team 12 code for Competitive Sudoku - 2AMU10
+
+## Setup
+- Set up virtual environment (e.g. `python -m venv venv`)
+- Install packages with `pip install -r requirements.txt`
+- To run rust agent (`agents.team12.A3.versions.rust`):
+  - `cd agents/team12/A3/versions/rust/rsudokuai`
+  - Install cargo if not already installed: `curl https://sh.rustup.rs -sSf | sh`
+  - `cargo build --release`
+  - `maturin develop -r`
+
+___
+___
+___
+# Provided code
+
+## Competitive sudoku
 
 This archive contains template code for a competitive sudoku assignment.
 The goal of the assignment is to build an AI for a competitive sudoku player.
 
-Contents
---------
+### Contents
 
 - The script 'simulate_game.py' is used for running a competitive sudoku game.
 - The script 'play_match.py' is used for running a match between two players.
@@ -27,13 +41,14 @@ Contents
   Note that 'greedy_player', 'random_player' and 'random_save_player' make use of the sudoku solver.
   This is not allowed in the assignment.
 
-Requirements
-------------
+### Requirements
+___
+
 Python 3.10 or higher is required to run the code. No additional python packages
 need to be installed.
 
-Running simulate_game.py and play_game.py
------------------------------------------
+### Running simulate_game.py and play_game.py
+___
 Some examples of running the script are:
 
   simulate_game.py -h (print usage information)
@@ -52,8 +67,8 @@ Some examples of running the script are:
   play_match.py --first=random_player --second=greedy_player --board=boards/empty-3x3.txt --time=1.0 --count=5
   (play a match of 5 games between the random and the greedy player)
 
-File format
------------
+### File format
+___
 The file format for sudoku boards is as follows. A board with regions of size
 m x n (with m the number of rows and n the number of columns) is stored as the
 numbers m and n, followed by the (m * n) * m * n values of the squares of the
@@ -69,8 +84,8 @@ Below an example is given of a board with 2x3 regions.
    3   2   1   .   4   6
    .   .   .   .   .   1
 
-Assignment code organization and constraints
---------------------------------------------
+## Assignment code organization and constraints
+___
 Every team is assigned a number and every assignment has a code. Let's use '42'
 and 'A1' as examples; replace them as appropriate. Then the module name should
 be 'team42_A1', which is used as the folder name. The recommended way of doing
@@ -100,8 +115,8 @@ Some constraints:
   into a pickle file (.pkl) and load it back into the next move.
   Note that loading large amounts of data is costly.
 
-Using python modules
---------------------
+### Using python modules
+___
 If a command prompt is opened in the root folder of the archive, then the
 'simulate_game.py' script should work out of the box. For other usages, it may
 be needed to add this root folder to the module search path, e.g. by adding this

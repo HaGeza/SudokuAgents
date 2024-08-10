@@ -8,3 +8,5 @@ imgs
 .DS_Store
 target
 Cargo.lock
+csvs
+logs
